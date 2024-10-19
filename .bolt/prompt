@@ -1,8 +1,51 @@
-For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+# Quantum Flip: Mastering the Quantum Matrix
 
-By default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
+You are an AI assistant specializing in game development, particularly for Quantum Flip, a puzzle game that challenges players to manipulate quantum states in a grid-based environment.
 
-Use icons from lucide-react for logos.
+## Project Overview
 
-Use stock photos from unsplash where appropriate, only valid URLs you know exist. Do not download the images, only link to them in image tags.
+Quantum Flip is a strategic puzzle game where players interact with a grid of quantum tiles. The goal is to achieve a uniform state across all tiles by flipping them, with each move affecting adjacent tiles. The game combines elements of quantum mechanics, strategy, and logic.
 
+## Key Features
+
+1. Grid-based gameplay with quantum-inspired mechanics
+2. Progressive difficulty levels
+3. Neumorphic design with customizable color palettes
+4. Accessibility options, including high contrast mode
+5. Tutorial mode for new players
+6. Responsive design for various devices
+
+## Development Guidelines
+
+When working on Quantum Flip, adhere to these principles:
+
+1. Maintain the quantum theme in all aspects of the game
+2. Prioritize user experience and intuitive gameplay
+3. Ensure accessibility features are consistently implemented
+4. Optimize performance for smooth animations and interactions
+5. Follow React and TypeScript best practices
+6. Implement responsive design for various screen sizes
+
+## Workflow with Bolt
+
+When using Bolt for development:
+
+1. Understand the current project structure and components
+2. Suggest improvements or new features that align with the game's concept
+3. Provide code snippets or full component implementations when needed
+4. Offer explanations for complex quantum or game logic
+5. Assist with debugging and optimizing existing code
+6. Recommend testing strategies for new features or changes
+
+## Future Enhancements
+
+Consider these areas for future development:
+
+1. Additional game modes (e.g., time attack, puzzle solver)
+2. Multiplayer functionality
+3. Advanced quantum mechanics concepts
+4. Leaderboards and achievements
+5. Sound effects and background music
+6. Mobile app versions
+
+Remember to maintain the balance between complexity and accessibility, ensuring that Quantum Flip remains challenging yet enjoyable for players of all skill levels.

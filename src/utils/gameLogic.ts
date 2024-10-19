@@ -1,91 +1,99 @@
-export const generateGrid = (size: number): boolean[][] => {
-  // Start with a solved grid (all tiles are false)
-  const grid = Array.from({ length: size }, () => Array(size).fill(false));
-  
-  // Perform random moves to scramble the grid
-  const numMoves = size * size; // Number of random moves to make
-  for (let i = 0; i < numMoves; i++) {
-    const row = Math.floor(Math.random() * size);
-    const col = Math.floor(Math.random() * size);
-    flipTiles(grid, row, col);
+import { BoardState } from '../types';
+
+// Pregenerated board states for each level
+export const pregeneratedLevels: BoardState[][] = [
+  [
+    [
+      [true, false, true],
+      [false, true, false],
+      [true, false, true]
+    ],
+    [
+      [false, true, false],
+      [true, false, true],
+      [false, true, false]
+    ],
+    [
+      [true, false, true],
+      [false, false, false],
+      [true, false, true]
+    ]
+  ],
+  [
+    [
+      [true, false, true, false],
+      [false, true, false, true],
+      [true, false, true, false],
+      [false, true, false, true]
+    ],
+    [
+      [false, true, false, true],
+      [true, false, true, false],
+      [false, true, false, true],
+      [true, false, true, false]
+    ],
+    [
+      [true, false, false, true],
+      [false, true, true, false],
+      [false, true, true, false],
+      [true, false, false, true]
+    ]
+  ],
+  // Add more levels as needed
+];
+
+export const getInitialBoardState = (level: number): BoardState => {
+  if (level < 0 || level >= pregeneratedLevels.length) {
+    throw new Error('Invalid level');
   }
-  
-  return grid;
+  return pregeneratedLevels[level][0];
 };
 
-export const flipTiles = (grid: boolean[][], row: number, col: number): void => {
-  const size = grid.length;
-  const directions = [
-    [0, 0],
-    [-1, 0],
-    [1, 0],
-    [0, -1],
-    [0, 1],
-  ];
-
-  directions.forEach(([dx, dy]) => {
-    const newRow = row + dx;
-    const newCol = col + dy;
-    if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-      grid[newRow][newCol] = !grid[newRow][newCol];
-    }
-  });
+export const engageNode = (matrix: BoardState, row: number, col: number): void => {
+  const size = matrix.length;
+  matrix[row][col] = !matrix[row][col];
+  if (row > 0) matrix[row - 1][col] = !matrix[row - 1][col];
+  if (row < size - 1) matrix[row + 1][col] = !matrix[row + 1][col];
+  if (col > 0) matrix[row][col - 1] = !matrix[row][col - 1];
+  if (col < size - 1) matrix[row][col + 1] = !matrix[row][col + 1];
 };
 
-export const checkWinCondition = (grid: boolean[][]): boolean => {
-  const firstTile = grid[0][0];
-  return grid.every((row) => row.every((tile) => tile === firstTile));
+export const scanAlignment = (matrix: BoardState): boolean => {
+  const referenceState = matrix[0][0];
+  return matrix.every((row) => row.every((node) => node === referenceState));
 };
 
-export const getNextMove = (grid: boolean[][]): [number, number] => {
-  const size = grid.length;
-  let bestScore = -Infinity;
-  let bestMove: [number, number] = [-1, -1];
+export const consultOracle = (matrix: BoardState): [number, number] => {
+  const size = matrix.length;
+  let optimalScore = -Infinity;
+  let optimalMove: [number, number] = [-1, -1];
 
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
-      const score = evaluateMove(grid, row, col);
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = [row, col];
+      const score = evaluateEngagement(matrix, row, col);
+      if (score > optimalScore) {
+        optimalScore = score;
+        optimalMove = [row, col];
       }
     }
   }
 
-  return bestMove;
+  return optimalMove;
 };
 
-const evaluateMove = (grid: boolean[][], row: number, col: number): number => {
-  const size = grid.length;
-  let flippedGrid = grid.map(row => [...row]);
-  flipTiles(flippedGrid, row, col);
+const evaluateEngagement = (matrix: BoardState, row: number, col: number): number => {
+  const projectedMatrix = matrix.map(row => [...row]);
+  engageNode(projectedMatrix, row, col);
 
-  let trueCount = 0;
-  let totalCount = 0;
+  let alignedNodes = 0;
+  let totalNodes = 0;
 
-  flippedGrid.forEach(row => {
-    row.forEach(cell => {
-      if (cell) trueCount++;
-      totalCount++;
+  projectedMatrix.forEach(row => {
+    row.forEach(node => {
+      if (node) alignedNodes++;
+      totalNodes++;
     });
   });
 
-  // Calculate how close we are to either all true or all false
-  return Math.max(trueCount, totalCount - trueCount);
-};
-
-export const isSolvable = (grid: boolean[][]): boolean => {
-  const size = grid.length;
-  let count = 0;
-  
-  for (let row = 0; row < size; row++) {
-    for (let col = 0; col < size; col++) {
-      if (grid[row][col]) {
-        count++;
-      }
-    }
-  }
-  
-  // The puzzle is solvable if the number of true tiles is even
-  return count % 2 === 0;
+  return Math.max(alignedNodes, totalNodes - alignedNodes);
 };
