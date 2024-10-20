@@ -11,6 +11,8 @@ interface SettingsModalProps {
   textColor: string;
   highContrastMode: boolean;
   onHighContrastToggle: () => void;
+  volume: number;
+  onVolumeChange: (volume: number) => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -22,10 +24,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   textColor,
   highContrastMode,
   onHighContrastToggle,
+  volume,
+  onVolumeChange,
 }) => {
   if (!isOpen) return null;
 
   const selectedPalette = colorPalettes[selectedPaletteIndex];
+
+  const handleVolumeChange = (newVolume: number) => {
+    onVolumeChange(newVolume);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -57,6 +65,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               />
               High Contrast Mode
             </label>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2" style={{ color: textColor }}>Volume</h3>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={volume}
+              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+              className="w-full"
+            />
           </div>
         </div>
       </div>

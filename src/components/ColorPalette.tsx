@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ColorPaletteProps {
-  palettes: { light: string; dark: string; lightHC: string; darkHC: string }[];
+  palettes: { light: string; dark: string; lightHC: string; darkHC: string; text: string }[];
   selectedIndex: number;
   onColorChange: (index: number) => void;
   highContrast: boolean;
