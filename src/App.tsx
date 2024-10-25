@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Settings, HelpCircle, RotateCcw, Zap, Bug, Target } from 'lucide-react';
 import GameBoard from './components/GameBoard';
-import HelpModal from './components/HelpModal';
 import SettingsModal from './components/SettingsModal';
-import ScreenDisplay from './components/ScreenDisplay';
+import ScreenDisplay, { ScreenDisplayHandle } from './components/ScreenDisplay';
 import Confetti from 'react-confetti';
 import { engageNode, scanAlignment, findNextMove } from './utils/gameLogic';
 import { useAudio } from './utils/audio';
 import { BoardState } from './types';
 import { getLevel, getTotalLevels } from './utils/levelData';
-import { generateSolvableLevel, generateSpecificLevel } from './utils/levelGenerator';
+import { generateSolvableLevel } from './utils/levelGenerator';
 
 const INITIAL_LEVEL = 0;
 
@@ -20,13 +19,30 @@ const colorPalettes = [
   { light: '#e8e6f0', dark: '#7b6b8e', darkest: '#2b1a33', lightHC: '#f5f0ff', darkHC: '#2b1a33', text: '#ffffff' },
 ];
 
+const helpContent = [
+  'Operator. Access granted to Quantum Matrix. Proceed.',
+  '',
+  '1. Engage a tile. Neighbors react. Disrupt the lattice.',
+  '2. Achieve uniformity. All tiles must align.',
+  '3. Endure. Adapt. Synchronize.',
+  '4. Consult the oracle if needed. Dependence weakens your skills.',
+  '5. Complexity rises. Stabilize the chaotic matrices.',
+  '6. Adjust chromatic resonance via parameter controls.',
+  '7. Modify matrix dimensions to alter challenge intensity.',
+  '',
+  'Warnings:',
+  '• Every action has consequences.',
+  '• True mastery lies in minimal disruption.',
+  '• Visual enhancement mode available for optimal node distinction.',
+  '• Experiment with matrix sizes to find your optimal challenge threshold.'
+];
+
 function App() {
   const [currentLevel, setCurrentLevel] = useState(INITIAL_LEVEL);
   const [grid, setGrid] = useState<BoardState>(() => getLevel(INITIAL_LEVEL));
   const [moveCount, setMoveCount] = useState(0);
   const [gameWon, setGameWon] = useState(false);
   const [hintTile, setHintTile] = useState<[number, number] | null>(null);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [colorPaletteIndex, setColorPaletteIndex] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -34,6 +50,7 @@ function App() {
   const [volume, setVolume] = useState(1);
   const [debugMode, setDebugMode] = useState(false);
   const [solution, setSolution] = useState<[number, number][]>([]);
+  const screenDisplayRef = useRef<ScreenDisplayHandle>(null);
 
   const { playTileInteractionSound, playLevelCompletionSound, isAudioLoaded } = useAudio();
 
@@ -41,6 +58,13 @@ function App() {
     ...colorPalettes[colorPaletteIndex],
     text: highContrastMode ? colorPalettes[colorPaletteIndex].lightHC : colorPalettes[colorPaletteIndex].text,
   }), [colorPaletteIndex, highContrastMode]);
+
+  // Calculate board coverage progress
+  const progress = useMemo(() => {
+    const totalTiles = grid.length * grid.length;
+    const activeTiles = grid.flat().filter(tile => tile).length;
+    return activeTiles / totalTiles;
+  }, [grid]);
 
   const resetLevel = useCallback(() => {
     if (debugMode) {
@@ -105,21 +129,16 @@ function App() {
   const handleRequestHint = useCallback(() => {
     if (gameWon) return;
     
-    // Toggle hint off if it's already showing
     if (hintTile !== null) {
       setHintTile(null);
       return;
     }
 
-    // Find the next best move that improves the board state
     const nextMove = findNextMove(grid);
     
     if (nextMove) {
-      // Show the improving move
       setHintTile(nextMove);
     } else {
-      // No improving move found - potential monetization point
-      // In the future, this could trigger a premium hint purchase prompt
       console.log('No improving move found - premium hint opportunity');
       setHintTile(null);
     }
@@ -151,18 +170,20 @@ function App() {
     });
   }, [currentLevel, grid.length]);
 
-  const generateSpecificDebugLevel = useCallback(() => {
-    if (debugMode) {
-      const specificSolution: [number, number][] = [[0, 0], [1, 1], [2, 2]];
-      const { board, solution } = generateSpecificLevel(3, specificSolution);
-      setGrid(board);
-      setSolution(solution);
-      setCurrentLevel(0);
-      setMoveCount(0);
-      setGameWon(false);
-      setHintTile(null);
+  const handleShowHelp = useCallback(() => {
+    if (screenDisplayRef.current) {
+      screenDisplayRef.current.addTerminalEntry({
+        timestamp: new Date().toLocaleTimeString('en-US', { 
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }),
+        content: helpContent,
+        type: 'help'
+      });
     }
-  }, [debugMode]);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8" style={{ backgroundColor: currentColorPalette.light }}>
@@ -170,14 +191,23 @@ function App() {
         colors={[currentColorPalette.dark, currentColorPalette.darkest, currentColorPalette.light]}
         numberOfPieces={200}
       />}
-      <div className="rounded-2xl neumorphic-shadow p-4 sm:p-6 max-w-md w-full" style={{ backgroundColor: currentColorPalette.light }}>
+      <div className="rounded-2xl neumorphic-shadow p-4 sm:p-6 max-w-md w-full" 
+        style={{ 
+          backgroundColor: currentColorPalette.light,
+          boxShadow: `
+            20px 20px 60px ${currentColorPalette.darkest}1A,
+            -20px -20px 60px ${currentColorPalette.light}CC
+          `
+        }}>
         <ScreenDisplay
+          ref={screenDisplayRef}
           levelName={`Level ${currentLevel + 1}`}
           moveCount={moveCount}
           gameWon={gameWon}
           colorPalette={currentColorPalette}
           tutorialMessage={null}
           debugMode={debugMode}
+          progress={progress}
         />
         <div className="my-6">
           <GameBoard
@@ -201,32 +231,148 @@ function App() {
           />
         </div>
       </div>
-      <div className="mt-4 flex space-x-4">
-        {[
-          { onClick: () => setIsSettingsOpen(true), title: "Adjust Parameters", icon: Settings },
-          { onClick: () => setIsHelpOpen(true), title: "Access Knowledge", icon: HelpCircle },
-          { onClick: resetLevel, title: "Reset Matrix", icon: RotateCcw },
-          { onClick: handleRequestHint, title: "Consult Oracle", icon: Zap, active: hintTile !== null },
-          { onClick: toggleDebugMode, title: "Toggle Debug Mode", icon: Bug },
-          { onClick: nextLevel, title: "Next Level", icon: Target },
-          ...(debugMode ? [{ onClick: generateSpecificDebugLevel, title: "Generate Specific Level", icon: Target }] : []),
-        ].map(({ onClick, title, icon: Icon, active }) => (
+      <div className="mt-4 flex justify-center items-center gap-8">
+        <style>
+          {`
+            .control-button {
+              width: 50px;
+              height: 50px;
+              border-radius: 15px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.3s ease;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .control-button::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+              border-radius: 15px;
+              opacity: 0.5;
+            }
+
+            .control-button:active {
+              transform: scale(0.95);
+            }
+
+            .control-button.active {
+              transform: scale(0.95);
+              box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+                inset -3px -3px 6px rgba(255, 255, 255, 0.2),
+                0px 0px 10px rgba(0, 0, 0, 0.1);
+            }
+          `}
+        </style>
+        <button
+          className="control-button"
+          onClick={resetLevel}
+          title="Reset Quantum State"
+          style={{
+            backgroundColor: currentColorPalette.light,
+            color: currentColorPalette.darkest,
+            boxShadow: `
+              5px 5px 10px ${currentColorPalette.darkest}40,
+              -5px -5px 10px ${currentColorPalette.light}CC,
+              inset 0 0 0 rgba(0,0,0,0)
+            `
+          }}
+        >
+          <RotateCcw size={24} />
+        </button>
+        <button
+          className={`control-button ${hintTile !== null ? 'active' : ''}`}
+          onClick={handleRequestHint}
+          title="Request Oracle Guidance"
+          style={{
+            backgroundColor: currentColorPalette.light,
+            color: currentColorPalette.darkest,
+            boxShadow: hintTile !== null ? 
+              `inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+               inset -3px -3px 6px rgba(255, 255, 255, 0.2),
+               0px 0px 10px rgba(0, 0, 0, 0.1)` :
+              `5px 5px 10px ${currentColorPalette.darkest}40,
+               -5px -5px 10px ${currentColorPalette.light}CC`
+          }}
+        >
+          <Zap size={24} />
+        </button>
+        <button
+          className="control-button"
+          onClick={handleShowHelp}
+          title="Access Protocol Manual"
+          style={{
+            backgroundColor: currentColorPalette.light,
+            color: currentColorPalette.darkest,
+            boxShadow: `
+              5px 5px 10px ${currentColorPalette.darkest}40,
+              -5px -5px 10px ${currentColorPalette.light}CC
+            `
+          }}
+        >
+          <HelpCircle size={24} />
+        </button>
+        <button
+          className="control-button"
+          onClick={() => setIsSettingsOpen(true)}
+          title="Settings"
+          style={{
+            backgroundColor: currentColorPalette.light,
+            color: currentColorPalette.darkest,
+            boxShadow: `
+              5px 5px 10px ${currentColorPalette.darkest}40,
+              -5px -5px 10px ${currentColorPalette.light}CC
+            `
+          }}
+        >
+          <Settings size={24} />
+        </button>
+
+        {process.env.NODE_ENV === 'development' && (
           <button
-            key={title}
-            className={`neumorphic-button ${active ? 'active' : ''}`}
-            onClick={onClick}
-            title={title}
+            className={`control-button ${debugMode ? 'active' : ''}`}
+            onClick={toggleDebugMode}
+            title="Toggle Debug Protocol"
             style={{
               backgroundColor: currentColorPalette.light,
               color: currentColorPalette.darkest,
-              ...(active && { boxShadow: 'inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.2)' })
+              boxShadow: debugMode ?
+                `inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+                 inset -3px -3px 6px rgba(255, 255, 255, 0.2),
+                 0px 0px 10px rgba(0, 0, 0, 0.1)` :
+                `5px 5px 10px ${currentColorPalette.darkest}40,
+                 -5px -5px 10px ${currentColorPalette.light}CC`
             }}
           >
-            <Icon size={24} />
+            <Bug size={24} />
           </button>
-        ))}
+        )}
+
+        {debugMode && process.env.NODE_ENV === 'development' && (
+          <button
+            className="control-button"
+            onClick={nextLevel}
+            title="Force Next Level"
+            style={{
+              backgroundColor: currentColorPalette.light,
+              color: currentColorPalette.darkest,
+              boxShadow: `
+                5px 5px 10px ${currentColorPalette.darkest}40,
+                -5px -5px 10px ${currentColorPalette.light}CC
+              `
+            }}
+          >
+            <Target size={24} />
+          </button>
+        )}
       </div>
-      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} textColor={currentColorPalette.darkest} />
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
