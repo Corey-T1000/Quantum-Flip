@@ -13,6 +13,7 @@ interface ScreenDisplayProps {
     text: string;
   };
   tutorialMessage: string | null;
+  debugMode: boolean; // Added debugMode prop
 }
 
 const ScreenDisplay: React.FC<ScreenDisplayProps> = ({
@@ -21,6 +22,7 @@ const ScreenDisplay: React.FC<ScreenDisplayProps> = ({
   gameWon,
   colorPalette,
   tutorialMessage,
+  debugMode, // Added debugMode prop
 }) => {
   useEffect(() => {
     console.log("ScreenDisplay re-rendered.", {
@@ -28,8 +30,9 @@ const ScreenDisplay: React.FC<ScreenDisplayProps> = ({
       moveCount,
       gameWon,
       tutorialMessage,
+      debugMode, // Log debugMode
     });
-  }, [levelName, moveCount, gameWon, tutorialMessage]);
+  }, [levelName, moveCount, gameWon, tutorialMessage, debugMode]);
 
   const getOperatorMessage = () => {
     console.log("getOperatorMessage called.", { gameWon, tutorialMessage });
@@ -55,7 +58,7 @@ const ScreenDisplay: React.FC<ScreenDisplayProps> = ({
   const message = getOperatorMessage();
   const title = getTitle();
 
-  console.log("ScreenDisplay rendering with:", { message, title, gameWon, tutorialMessage });
+  console.log("ScreenDisplay rendering with:", { message, title, gameWon, tutorialMessage, debugMode });
 
   return (
     <div 
@@ -82,6 +85,12 @@ const ScreenDisplay: React.FC<ScreenDisplayProps> = ({
         </span>
       </div>
       <div style={{ color: colorPalette.lightHC }}>Debug: gameWon = {gameWon.toString()}, isTutorial = {(!!tutorialMessage).toString()}</div>
+      {debugMode && (
+        <div style={{ color: colorPalette.lightHC }}>
+          <p>Debug Mode: Active</p>
+          <p>Additional debug information can be displayed here.</p>
+        </div>
+      )}
     </div>
   );
 };

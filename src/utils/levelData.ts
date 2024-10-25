@@ -1,60 +1,24 @@
-import { Level } from '../types';
+import { BoardState } from '../types';
+import { generateAllLevels } from './levelGenerator';
 
-export const levels: Level[] = [
-  // Tutorial levels
-  {
-    id: 'tutorial1',
-    name: 'Tutorial 1',
-    description: 'Welcome to the Quantum Matrix. Engage the central node to begin.',
-    grid: [
-      'oxo',
-      'xxx',
-      'oxo'
-    ]
-  },
-  {
-    id: 'tutorial2',
-    name: 'Tutorial 2',
-    description: 'Excellent. Now, observe how engaging a node affects its neighbors.',
-    grid: [
-      'xxo',
-      'xox',
-      'oxx'
-    ]
-  },
-  {
-    id: 'tutorial3',
-    name: 'Tutorial 3',
-    description: 'Perfect. Your goal is to align all nodes. Try to solve this pattern.',
-    grid: [
-      'oox',
-      'oxo',
-      'xoo'
-    ]
-  },
-  // Regular levels
-  {
-    id: 'level1',
-    name: 'Level 1',
-    description: 'Your first challenge. Align the matrix.',
-    grid: [
-      'oooo',
-      'oooo',
-      'oooo',
-      'oooo'
-    ]
-  },
-  // Add more levels here...
-];
+// Generate levels only once at startup
+export const pregeneratedLevels = generateAllLevels();
 
-export const getLevelById = (id: string): Level | undefined => {
-  return levels.find(level => level.id === id);
+// Function to get a specific level
+export const getLevel = (levelIndex: number): BoardState => {
+  if (levelIndex < 0 || levelIndex >= pregeneratedLevels.length) {
+    throw new Error(`Invalid level index: ${levelIndex}`);
+  }
+  return pregeneratedLevels[levelIndex].board;
 };
 
-export const getNextLevelId = (currentId: string): string | undefined => {
-  const currentIndex = levels.findIndex(level => level.id === currentId);
-  if (currentIndex < levels.length - 1) {
-    return levels[currentIndex + 1].id;
+// Function to get the total number of levels
+export const getTotalLevels = (): number => pregeneratedLevels.length;
+
+// Function to get the solution for a specific level
+export const getLevelSolution = (levelIndex: number): [number, number][] => {
+  if (levelIndex < 0 || levelIndex >= pregeneratedLevels.length) {
+    throw new Error(`Invalid level index: ${levelIndex}`);
   }
-  return undefined;
+  return pregeneratedLevels[levelIndex].solution;
 };

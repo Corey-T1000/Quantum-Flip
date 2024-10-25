@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Settings, HelpCircle, RotateCcw, Zap } from 'lucide-react';
+import { Settings, HelpCircle, RotateCcw, Zap, Bug, Target } from 'lucide-react';
 import GameBoard from './components/GameBoard';
-import GameControls from './components/GameControls';
 import HelpModal from './components/HelpModal';
 import SettingsModal from './components/SettingsModal';
 import ScreenDisplay from './components/ScreenDisplay';
 import Confetti from 'react-confetti';
-import { engageNode, scanAlignment, consultOracle, getInitialBoardState } from './utils/gameLogic';
+import { engageNode, scanAlignment, findNextMove } from './utils/gameLogic';
 import { useAudio } from './utils/audio';
 import { BoardState } from './types';
-import { getLevelById, getNextLevelId } from './utils/levelData';
+import { getLevel, getTotalLevels } from './utils/levelData';
+import { generateSolvableLevel, generateSpecificLevel } from './utils/levelGenerator';
 
-const INITIAL_LEVEL_ID = 'tutorial1';
+const INITIAL_LEVEL = 0;
 
 const colorPalettes = [
   { light: '#e0e5ec', dark: '#a3b1c6', darkest: '#4a5568', lightHC: '#ffffff', darkHC: '#000000', text: '#ffffff' },
@@ -20,14 +20,9 @@ const colorPalettes = [
   { light: '#e8e6f0', dark: '#7b6b8e', darkest: '#2b1a33', lightHC: '#f5f0ff', darkHC: '#2b1a33', text: '#ffffff' },
 ];
 
-const HINT_COOLDOWN = 10000; // 10 seconds cooldown
-
 function App() {
-  const [currentLevelId, setCurrentLevelId] = useState(INITIAL_LEVEL_ID);
-  const [grid, setGrid] = useState<BoardState>(() => {
-    const initialLevel = getLevelById(INITIAL_LEVEL_ID);
-    return initialLevel ? getInitialBoardState(initialLevel) : [];
-  });
+  const [currentLevel, setCurrentLevel] = useState(INITIAL_LEVEL);
+  const [grid, setGrid] = useState<BoardState>(() => getLevel(INITIAL_LEVEL));
   const [moveCount, setMoveCount] = useState(0);
   const [gameWon, setGameWon] = useState(false);
   const [hintTile, setHintTile] = useState<[number, number] | null>(null);
@@ -37,118 +32,152 @@ function App() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [highContrastMode, setHighContrastMode] = useState(false);
   const [volume, setVolume] = useState(1);
-  const { playTileInteractionSound, playLevelCompletionSound } = useAudio();
-  const [lastHintTime, setLastHintTime] = useState(0);
+  const [debugMode, setDebugMode] = useState(false);
+  const [solution, setSolution] = useState<[number, number][]>([]);
 
-  const currentLevel = useMemo(() => getLevelById(currentLevelId), [currentLevelId]);
+  const { playTileInteractionSound, playLevelCompletionSound, isAudioLoaded } = useAudio();
 
-  const currentColorPalette = useMemo(() => {
-    const palette = colorPalettes[colorPaletteIndex];
-    return {
-      ...palette,
-      text: highContrastMode ? palette.lightHC : palette.text,
-    };
-  }, [colorPaletteIndex, highContrastMode]);
+  const currentColorPalette = useMemo(() => ({
+    ...colorPalettes[colorPaletteIndex],
+    text: highContrastMode ? colorPalettes[colorPaletteIndex].lightHC : colorPalettes[colorPaletteIndex].text,
+  }), [colorPaletteIndex, highContrastMode]);
 
   const resetLevel = useCallback(() => {
-    console.log("Resetting level");
-    if (currentLevel) {
-      setGrid(getInitialBoardState(currentLevel));
+    if (debugMode) {
+      const { board, solution } = generateSolvableLevel(grid.length, Math.max(2, currentLevel + 1));
+      setGrid(board);
+      setSolution(solution);
+    } else {
+      setGrid(getLevel(currentLevel));
+      setSolution([]);
+    }
+    setMoveCount(0);
+    setGameWon(false);
+    setHintTile(null);
+  }, [currentLevel, debugMode, grid.length]);
+
+  const handleTileClick = useCallback((row: number, col: number) => {
+    if (gameWon) return;
+    if (isAudioLoaded()) {
+      playTileInteractionSound();
+    }
+    setGrid(prevGrid => {
+      const newGrid = engageNode(prevGrid, row, col);
+      return newGrid;
+    });
+    setMoveCount(prevCount => prevCount + 1);
+    setHintTile(null);
+  }, [gameWon, playTileInteractionSound, isAudioLoaded]);
+
+  useEffect(() => {
+    if (!gameWon) {
+      const isAligned = scanAlignment(grid);
+      if (isAligned) {
+        setGameWon(true);
+        setShowConfetti(true);
+        setHintTile(null);
+        if (isAudioLoaded()) {
+          playLevelCompletionSound();
+        }
+        setTimeout(() => setShowConfetti(false), 5000);
+      }
+    }
+  }, [grid, gameWon, playLevelCompletionSound, isAudioLoaded]);
+
+  const nextLevel = useCallback(() => {
+    const nextLevelIndex = currentLevel + 1;
+    if (nextLevelIndex < getTotalLevels()) {
+      setCurrentLevel(nextLevelIndex);
+      if (debugMode) {
+        const { board, solution } = generateSolvableLevel(grid.length, Math.max(2, nextLevelIndex + 1));
+        setGrid(board);
+        setSolution(solution);
+      } else {
+        setGrid(getLevel(nextLevelIndex));
+        setSolution([]);
+      }
       setMoveCount(0);
       setGameWon(false);
       setHintTile(null);
     }
-  }, [currentLevel]);
+  }, [currentLevel, debugMode, grid.length]);
 
-  const handleTileClick = useCallback((row: number, col: number) => {
-    console.log(`Tile clicked: row ${row}, col ${col}`);
-    if (gameWon) {
-      console.log("Game already won, ignoring click");
+  const handleRequestHint = useCallback(() => {
+    if (gameWon) return;
+    
+    // Toggle hint off if it's already showing
+    if (hintTile !== null) {
+      setHintTile(null);
       return;
     }
 
-    console.log("Attempting to play tile interaction sound");
-    playTileInteractionSound();
-
-    setGrid(prevGrid => {
-      const newGrid = engageNode(prevGrid, row, col);
-      console.log("New grid state:", JSON.stringify(newGrid));
-      return newGrid;
-    });
-
-    setMoveCount(prevCount => prevCount + 1);
-    setHintTile(null); // Clear the hint when a tile is clicked
-  }, [gameWon, playTileInteractionSound]);
-
-  useEffect(() => {
-    const isAligned = scanAlignment(grid);
-    console.log(`Checking alignment. isAligned=${isAligned}, current gameWon=${gameWon}`);
-    if (isAligned && !gameWon) {
-      console.log("Alignment detected, setting gameWon to true");
-      setGameWon(true);
-      setShowConfetti(true);
-      console.log("Attempting to play level completion sound");
-      playLevelCompletionSound();
-      setTimeout(() => setShowConfetti(false), 5000);
-    } else if (!isAligned && gameWon) {
-      console.log("Grid not aligned, but gameWon is true. Setting gameWon to false");
-      setGameWon(false);
+    // Find the next best move that improves the board state
+    const nextMove = findNextMove(grid);
+    
+    if (nextMove) {
+      // Show the improving move
+      setHintTile(nextMove);
+    } else {
+      // No improving move found - potential monetization point
+      // In the future, this could trigger a premium hint purchase prompt
+      console.log('No improving move found - premium hint opportunity');
+      setHintTile(null);
     }
-  }, [grid, gameWon, playLevelCompletionSound]);
+  }, [gameWon, grid, hintTile]);
 
-  const nextLevel = useCallback(() => {
-    const nextLevelId = getNextLevelId(currentLevelId);
-    if (nextLevelId) {
-      setCurrentLevelId(nextLevelId);
-      const nextLevel = getLevelById(nextLevelId);
-      if (nextLevel) {
-        setGrid(getInitialBoardState(nextLevel));
-        setMoveCount(0);
-        setGameWon(false);
-        setHintTile(null);
-      }
-    }
-  }, [currentLevelId]);
-
-  const handleStuckClick = useCallback(() => {
-    const currentTime = Date.now();
-    if (currentTime - lastHintTime < HINT_COOLDOWN) {
-      console.log("Hint on cooldown");
-      return;
-    }
-
-    const [row, col] = consultOracle(grid);
-    setHintTile([row, col]);
-    setLastHintTime(currentTime);
-  }, [grid, lastHintTime]);
-
-  const handleColorChange = useCallback((index: number) => {
-    setColorPaletteIndex(index);
+  const handleHintUsed = useCallback(() => {
+    setHintTile(null);
   }, []);
 
   useEffect(() => {
     if (gameWon) {
-      const timer = setTimeout(() => {
-        nextLevel();
-      }, 2000);
+      const timer = setTimeout(nextLevel, 2000);
       return () => clearTimeout(timer);
     }
   }, [gameWon, nextLevel]);
 
-  const handleVolumeChange = useCallback((newVolume: number) => {
-    setVolume(newVolume);
-  }, []);
+  const toggleDebugMode = useCallback(() => {
+    setDebugMode(prev => {
+      const newDebugMode = !prev;
+      if (newDebugMode) {
+        const { board, solution } = generateSolvableLevel(grid.length, Math.max(2, currentLevel + 1));
+        setGrid(board);
+        setSolution(solution);
+      } else {
+        setGrid(getLevel(currentLevel));
+        setSolution([]);
+      }
+      return newDebugMode;
+    });
+  }, [currentLevel, grid.length]);
+
+  const generateSpecificDebugLevel = useCallback(() => {
+    if (debugMode) {
+      const specificSolution: [number, number][] = [[0, 0], [1, 1], [2, 2]];
+      const { board, solution } = generateSpecificLevel(3, specificSolution);
+      setGrid(board);
+      setSolution(solution);
+      setCurrentLevel(0);
+      setMoveCount(0);
+      setGameWon(false);
+      setHintTile(null);
+    }
+  }, [debugMode]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8" style={{ backgroundColor: currentColorPalette.light }}>
-      {showConfetti && <Confetti />}
+      {showConfetti && <Confetti 
+        colors={[currentColorPalette.dark, currentColorPalette.darkest, currentColorPalette.light]}
+        numberOfPieces={200}
+      />}
       <div className="rounded-2xl neumorphic-shadow p-4 sm:p-6 max-w-md w-full" style={{ backgroundColor: currentColorPalette.light }}>
         <ScreenDisplay
-          levelName={currentLevel?.name || ''}
+          levelName={`Level ${currentLevel + 1}`}
           moveCount={moveCount}
           gameWon={gameWon}
           colorPalette={currentColorPalette}
-          tutorialMessage={currentLevel?.description || null}
+          tutorialMessage={null}
+          debugMode={debugMode}
         />
         <div className="my-6">
           <GameBoard
@@ -166,27 +195,36 @@ function App() {
               lightHC: currentColorPalette.lightHC,
               darkHC: currentColorPalette.darkHC,
             }}
+            debugMode={debugMode}
+            solution={solution}
+            onHintUsed={handleHintUsed}
           />
         </div>
-        <GameControls
-          onNextLevel={nextLevel}
-          gameWon={gameWon}
-          textColor={currentColorPalette.text}
-        />
       </div>
       <div className="mt-4 flex space-x-4">
-        <button className="neumorphic-button" onClick={() => setIsSettingsOpen(true)} title="Adjust Parameters" style={{ backgroundColor: currentColorPalette.light, color: currentColorPalette.darkest }}>
-          <Settings size={24} />
-        </button>
-        <button className="neumorphic-button" onClick={() => setIsHelpOpen(true)} title="Access Knowledge" style={{ backgroundColor: currentColorPalette.light, color: currentColorPalette.darkest }}>
-          <HelpCircle size={24} />
-        </button>
-        <button className="neumorphic-button" onClick={resetLevel} title="Reset Matrix" style={{ backgroundColor: currentColorPalette.light, color: currentColorPalette.darkest }}>
-          <RotateCcw size={24} />
-        </button>
-        <button className="neumorphic-button" onClick={handleStuckClick} title="Consult Oracle" style={{ backgroundColor: currentColorPalette.light, color: currentColorPalette.darkest }}>
-          <Zap size={24} />
-        </button>
+        {[
+          { onClick: () => setIsSettingsOpen(true), title: "Adjust Parameters", icon: Settings },
+          { onClick: () => setIsHelpOpen(true), title: "Access Knowledge", icon: HelpCircle },
+          { onClick: resetLevel, title: "Reset Matrix", icon: RotateCcw },
+          { onClick: handleRequestHint, title: "Consult Oracle", icon: Zap, active: hintTile !== null },
+          { onClick: toggleDebugMode, title: "Toggle Debug Mode", icon: Bug },
+          { onClick: nextLevel, title: "Next Level", icon: Target },
+          ...(debugMode ? [{ onClick: generateSpecificDebugLevel, title: "Generate Specific Level", icon: Target }] : []),
+        ].map(({ onClick, title, icon: Icon, active }) => (
+          <button
+            key={title}
+            className={`neumorphic-button ${active ? 'active' : ''}`}
+            onClick={onClick}
+            title={title}
+            style={{
+              backgroundColor: currentColorPalette.light,
+              color: currentColorPalette.darkest,
+              ...(active && { boxShadow: 'inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.2)' })
+            }}
+          >
+            <Icon size={24} />
+          </button>
+        ))}
       </div>
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} textColor={currentColorPalette.darkest} />
       <SettingsModal
@@ -194,12 +232,12 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         colorPalettes={colorPalettes}
         selectedPaletteIndex={colorPaletteIndex}
-        onColorChange={handleColorChange}
+        onColorChange={setColorPaletteIndex}
         textColor={currentColorPalette.darkest}
         highContrastMode={highContrastMode}
         onHighContrastToggle={() => setHighContrastMode(prev => !prev)}
         volume={volume}
-        onVolumeChange={handleVolumeChange}
+        onVolumeChange={setVolume}
       />
     </div>
   );
