@@ -51,8 +51,6 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
   const terminalRef = useRef<HTMLDivElement>(null);
   const prevLevelRef = useRef(levelName);
 
-  // Convert progress to represent balance between light and dark states
-  const normalizedProgress = progress >= 0.5 ? progress : 1 - progress;
   const dominantState = progress >= 0.5 ? 'light' : 'dark';
 
   useEffect(() => {
@@ -212,8 +210,6 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
     };
 
     const progressWidth = window.innerWidth < 768 ? 48 : 96;
-    const filledWidth = normalizedProgress * progressWidth;
-    const filledComplete = Math.floor(filledWidth);
 
     return (
       <div className={styles['terminal-status-bar']}>
@@ -247,14 +243,21 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
               className={styles['progress-track']}
               style={{ gridTemplateColumns: `repeat(${progressWidth}, 1fr)` }}
             >
-              {Array(progressWidth).fill(null).map((_, i) => (
-                <span
-                  key={i}
-                  className={`${i < filledComplete ? `state-${dominantState}` : 'text-gray-500'}`}
-                >
-                  {i < filledComplete ? progressChars.filled : progressChars.empty}
-                </span>
-              ))}
+              {Array(progressWidth).fill(null).map((_, i) => {
+                const position = i / progressWidth;
+                const isLight = progress >= 0.5;
+                const isActive = isLight ? position <= progress : position <= (1 - progress);
+                const stateClass = isLight ? 'light' : 'dark';
+                
+                return (
+                  <span
+                    key={i}
+                    className={`${styles['progress-dot']} ${isActive ? styles[`progress-dot-${stateClass}`] : ''}`}
+                  >
+                    {isActive ? progressChars.filled : progressChars.empty}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -30,7 +30,7 @@
   line-height: 1;
 }
 
-.progress-track span {
+.progress-dot {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,6 +39,17 @@
   height: 28px;
   touch-action: manipulation;
   transition: all 0.3s ease-in-out;
+  color: var(--color-gray-500);
+}
+
+.progress-dot-light {
+  color: var(--color-primary);
+  text-shadow: var(--state-glow);
+}
+
+.progress-dot-dark {
+  color: var(--color-secondary);
+  text-shadow: var(--state-glow);
 }
 
 .terminal-window {
@@ -139,7 +150,7 @@
     font-size: 1rem;
   }
 
-  .progress-track span {
+  .progress-dot {
     height: 16px;
   }
 
@@ -183,7 +194,7 @@
     opacity: 0.8;
   }
 
-  .progress-track span:active {
+  .progress-dot:active {
     transform: scale(1.2);
   }
 }
