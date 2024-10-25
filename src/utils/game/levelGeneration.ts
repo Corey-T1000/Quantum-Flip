@@ -1,7 +1,9 @@
-import { BoardState } from '../types';
-import { engageNode } from './gameLogic';
+import { BoardState } from '../../types';
+import { engageNode } from './nodeOperations';
 
-// Function to generate a solvable level
+/**
+ * Generates a solvable level with the specified size and number of moves.
+ */
 export const generateSolvableLevel = (size: number, moves: number): { board: BoardState, solution: [number, number][] } => {
   let board: BoardState = Array.from({ length: size }, () => Array(size).fill(false));
   const solution: [number, number][] = [];
@@ -17,7 +19,9 @@ export const generateSolvableLevel = (size: number, moves: number): { board: Boa
   return { board, solution };
 };
 
-// Function to generate a specific level with a known solution
+/**
+ * Generates a specific level with a known solution.
+ */
 export const generateSpecificLevel = (size: number, solution: [number, number][]): { board: BoardState, solution: [number, number][] } => {
   let board: BoardState = Array.from({ length: size }, () => Array(size).fill(false));
 
@@ -28,8 +32,10 @@ export const generateSpecificLevel = (size: number, solution: [number, number][]
   return { board, solution: [...solution].reverse() };
 };
 
-// Function to generate a set of levels
-const generateLevelSet = (boardSize: number, levelsInSet: number): { board: BoardState, solution: [number, number][] }[] => {
+/**
+ * Generates a set of levels with increasing difficulty.
+ */
+export const generateLevelSet = (boardSize: number, levelsInSet: number): { board: BoardState, solution: [number, number][] }[] => {
   const levelSet: { board: BoardState, solution: [number, number][] }[] = [];
   for (let i = 1; i <= levelsInSet; i++) {
     const moves = Math.max(2, i); // Ensure at least 2 moves, then increase progressively
@@ -38,10 +44,11 @@ const generateLevelSet = (boardSize: number, levelsInSet: number): { board: Boar
   return levelSet;
 };
 
-// Generate all level sets
-const levelsPerSet = 10;
-
+/**
+ * Generates all level sets for the game.
+ */
 export const generateAllLevels = (): { board: BoardState, solution: [number, number][] }[] => {
+  const levelsPerSet = 10;
   const set1 = generateLevelSet(3, levelsPerSet); // Levels 1-10
   const set2 = generateLevelSet(4, levelsPerSet); // Levels 11-20
   const set3 = generateLevelSet(5, levelsPerSet); // Levels 21-30
@@ -49,7 +56,9 @@ export const generateAllLevels = (): { board: BoardState, solution: [number, num
   return [...set1, ...set2, ...set3];
 };
 
-// Function to verify if a level is solvable
+/**
+ * Verifies if a level is solvable with the given solution.
+ */
 export const verifyLevelSolvability = (board: BoardState, solution: [number, number][]): boolean => {
   let currentBoard = [...board.map(row => [...row])];
   

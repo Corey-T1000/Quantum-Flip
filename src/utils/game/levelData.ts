@@ -1,10 +1,12 @@
-import { BoardState } from '../types';
-import { generateAllLevels } from './levelGenerator';
+import { BoardState } from '../../types';
+import { generateAllLevels } from './levelGeneration';
 
 // Generate levels only once at startup
 export const pregeneratedLevels = generateAllLevels();
 
-// Function to get a specific level
+/**
+ * Gets a specific level's board state.
+ */
 export const getLevel = (levelIndex: number): BoardState => {
   if (levelIndex < 0 || levelIndex >= pregeneratedLevels.length) {
     throw new Error(`Invalid level index: ${levelIndex}`);
@@ -12,10 +14,14 @@ export const getLevel = (levelIndex: number): BoardState => {
   return pregeneratedLevels[levelIndex].board;
 };
 
-// Function to get the total number of levels
+/**
+ * Gets the total number of available levels.
+ */
 export const getTotalLevels = (): number => pregeneratedLevels.length;
 
-// Function to get the solution for a specific level
+/**
+ * Gets the solution for a specific level.
+ */
 export const getLevelSolution = (levelIndex: number): [number, number][] => {
   if (levelIndex < 0 || levelIndex >= pregeneratedLevels.length) {
     throw new Error(`Invalid level index: ${levelIndex}`);

@@ -4,11 +4,12 @@ import GameBoard from './components/GameBoard';
 import SettingsModal from './components/SettingsModal';
 import ScreenDisplay, { ScreenDisplayHandle } from './components/ScreenDisplay';
 import Confetti from 'react-confetti';
-import { engageNode, scanAlignment, findNextMove } from './utils/gameLogic';
-import { useAudio } from './utils/audio';
+import { engageNode } from './utils/game/nodeOperations';
+import { scanAlignment, findNextMove } from './utils/game/boardAnalysis';
+import { useAudio } from './utils/audio/index';
 import { BoardState } from './types';
-import { getLevel, getTotalLevels } from './utils/levelData';
-import { generateSolvableLevel } from './utils/levelGenerator';
+import { getLevel, getTotalLevels } from './utils/game/levelData';
+import { generateSolvableLevel } from './utils/game/levelGeneration';
 
 const INITIAL_LEVEL = 0;
 
@@ -59,11 +60,20 @@ function App() {
     text: highContrastMode ? colorPalettes[colorPaletteIndex].lightHC : colorPalettes[colorPaletteIndex].text,
   }), [colorPaletteIndex, highContrastMode]);
 
-  // Calculate board coverage progress
-  const progress = useMemo(() => {
+  // Calculate board state information
+  const boardState = useMemo(() => {
     const totalTiles = grid.length * grid.length;
-    const activeTiles = grid.flat().filter(tile => tile).length;
-    return activeTiles / totalTiles;
+    const lightTiles = grid.flat().filter(tile => tile).length;
+    const darkTiles = totalTiles - lightTiles;
+    const lightRatio = lightTiles / totalTiles;
+    const darkRatio = darkTiles / totalTiles;
+    const dominantState: 'light' | 'dark' = lightRatio >= darkRatio ? 'light' : 'dark';
+    const dominantRatio = Math.max(lightRatio, darkRatio);
+    
+    return {
+      dominantState,
+      progress: dominantRatio
+    } as const;
   }, [grid]);
 
   const resetLevel = useCallback(() => {
@@ -207,7 +217,8 @@ function App() {
           colorPalette={currentColorPalette}
           tutorialMessage={null}
           debugMode={debugMode}
-          progress={progress}
+          progress={boardState.progress}
+          dominantState={boardState.dominantState}
         />
         <div className="my-6">
           <GameBoard
@@ -232,45 +243,6 @@ function App() {
         </div>
       </div>
       <div className="mt-4 flex justify-center items-center gap-8">
-        <style>
-          {`
-            .control-button {
-              width: 50px;
-              height: 50px;
-              border-radius: 15px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              transition: all 0.3s ease;
-              position: relative;
-              overflow: hidden;
-            }
-
-            .control-button::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
-              border-radius: 15px;
-              opacity: 0.5;
-            }
-
-            .control-button:active {
-              transform: scale(0.95);
-            }
-
-            .control-button.active {
-              transform: scale(0.95);
-              box-shadow: 
-                inset 3px 3px 6px rgba(0, 0, 0, 0.2),
-                inset -3px -3px 6px rgba(255, 255, 255, 0.2),
-                0px 0px 10px rgba(0, 0, 0, 0.1);
-            }
-          `}
-        </style>
         <button
           className="control-button"
           onClick={resetLevel}
@@ -385,6 +357,45 @@ function App() {
         volume={volume}
         onVolumeChange={setVolume}
       />
+      <style>
+        {`
+          .control-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .control-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 15px;
+            opacity: 0.5;
+          }
+
+          .control-button:active {
+            transform: scale(0.95);
+          }
+
+          .control-button.active {
+            transform: scale(0.95);
+            box-shadow: 
+              inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+              inset -3px -3px 6px rgba(255, 255, 255, 0.2),
+              0px 0px 10px rgba(0, 0, 0, 0.1);
+          }
+        `}
+      </style>
     </div>
   );
 }
