@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import styles from '../styles/components/ScreenDisplay.module.css';
+import '../styles/themes/colors.css';
+import '../styles/global.css';
 
 interface TerminalEntry {
   timestamp: string;
@@ -48,9 +51,22 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
   const terminalRef = useRef<HTMLDivElement>(null);
   const prevLevelRef = useRef(levelName);
 
+  // Convert progress to represent balance between light and dark states
+  const normalizedProgress = progress >= 0.5 ? progress : 1 - progress;
+  const dominantState = progress >= 0.5 ? 'light' : 'dark';
+
+  useEffect(() => {
+    // Update CSS variables when colorPalette changes
+    document.documentElement.style.setProperty('--color-background', colorPalette.darkest);
+    document.documentElement.style.setProperty('--color-foreground', colorPalette.text);
+    document.documentElement.style.setProperty('--color-primary', colorPalette.light);
+    document.documentElement.style.setProperty('--color-secondary', colorPalette.dark);
+    document.documentElement.style.setProperty('--color-highlight', colorPalette.lightHC);
+    document.documentElement.style.setProperty('--color-shadow', colorPalette.darkHC);
+  }, [colorPalette]);
+
   const addTerminalEntry = (entry: TerminalEntry) => {
     setTerminalHistory(prev => [...prev, entry]);
-    // Scroll to bottom
     if (terminalRef.current) {
       setTimeout(() => {
         if (terminalRef.current) {
@@ -63,48 +79,6 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
   useImperativeHandle(ref, () => ({
     addTerminalEntry
   }));
-
-  // Convert progress to represent balance between light and dark states
-  const normalizedProgress = progress >= 0.5 ? progress : 1 - progress;
-  const dominantState = progress >= 0.5 ? 'light' : 'dark';
-
-  // Charm-inspired styles using the provided colorPalette
-  const charm = {
-    background: colorPalette.darkest,
-    foreground: colorPalette.text,
-    primary: colorPalette.light,
-    secondary: colorPalette.dark,
-    highlight: colorPalette.lightHC,
-    shadow: colorPalette.darkHC,
-    success: '#9ECE6A',
-    warning: '#E0AF68',
-    error: '#F7768E',
-    gray100: colorPalette.text,
-    gray200: `${colorPalette.text}CC`,
-    gray300: `${colorPalette.text}99`,
-    gray400: `${colorPalette.text}66`,
-    gray500: `${colorPalette.text}44`,
-    gray600: `${colorPalette.darkest}CC`,
-    gray700: colorPalette.darkest,
-    gray800: `${colorPalette.darkHC}CC`,
-    gray900: colorPalette.darkHC,
-  };
-
-  const styles = {
-    text: {
-      normal: { color: charm.gray100 },
-      dim: { color: charm.gray300 },
-      highlight: { color: charm.primary },
-      success: { color: charm.success },
-      warning: { color: charm.warning },
-      error: { color: charm.error },
-    },
-    border: {
-      normal: `1px solid ${charm.gray600}`,
-      highlight: `1px solid ${charm.primary}`,
-      glow: `0 0 10px ${charm.primary}33`,
-    },
-  };
 
   const getTimestamp = () => {
     const now = new Date();
@@ -189,7 +163,7 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
     const renderContent = (content: string | string[]) => {
       if (Array.isArray(content)) {
         return content.map((line, i) => (
-          <div key={i} className="ml-4">
+          <div key={i} className={styles['terminal-line-content']}>
             {line}
           </div>
         ));
@@ -198,35 +172,31 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
     };
 
     return (
-      <div key={index} className="terminal-line typing-effect mb-2 text-base md:text-sm">
+      <div key={index} className={`${styles['terminal-line']} typing-effect`}>
         {showTimestamps && (
-          <span style={{ ...styles.text.dim, marginRight: '1rem' }}>
+          <span className="text-dim mr-4">
             {timestamp}
           </span>
         )}
         {type === 'command' && count ? (
-          <div className="flex items-center space-x-3 py-1">
-            <span className="prompt-symbol text-lg md:text-base">❯</span>
-            <span style={{ 
-              color: state === 'light' ? charm.primary : charm.secondary,
-              textShadow: `0 0 10px ${state === 'light' ? charm.highlight : charm.shadow}33`,
-              fontWeight: 'bold'
-            }}>
+          <div className={styles['command-line']}>
+            <span className={styles['prompt-symbol']}>❯</span>
+            <span className={`${styles['level-indicator']} state-${state}`}>
               M{level}
             </span>
-            <span style={{ color: charm.gray200 }}>{content}</span>
-            <span style={{ ...styles.text.dim }} className="ml-2">×{count}</span>
+            <span className="text-gray-200">{content}</span>
+            <span className="text-dim ml-2">×{count}</span>
           </div>
         ) : type === 'help' ? (
-          <div className="py-1" style={{ color: charm.warning }}>
-            <div className="flex items-center space-x-3">
-              <span className="prompt-symbol text-lg md:text-base">❯</span>
-              <span style={{ fontWeight: 'bold' }}>help.display()</span>
+          <div className={styles['help-line']}>
+            <div className={styles['help-header']}>
+              <span className={styles['prompt-symbol']}>❯</span>
+              <span className="font-bold text-warning">help.display()</span>
             </div>
-            <div className="mt-2">{renderContent(content)}</div>
+            <div className={styles['help-content']}>{renderContent(content)}</div>
           </div>
         ) : (
-          <span style={{ color: type === 'system' ? charm.success : charm.foreground }}>
+          <span className={type === 'system' ? 'text-success' : 'text-foreground'}>
             {renderContent(content)}
           </span>
         )}
@@ -241,62 +211,46 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
       separator: '·'
     };
 
-    // Adjust progress width based on container width
     const progressWidth = window.innerWidth < 768 ? 48 : 96;
     const filledWidth = normalizedProgress * progressWidth;
     const filledComplete = Math.floor(filledWidth);
 
-    const stateColor = dominantState === 'light' ? colorPalette.light : colorPalette.dark;
-    const stateGlow = `0 0 10px ${dominantState === 'light' ? colorPalette.lightHC : colorPalette.darkHC}33`;
-
     return (
-      <div className="terminal-status-bar font-mono text-base md:text-sm">
-        <div className="flex flex-col gap-2 px-4 py-3 md:py-2" style={{ 
-          borderTop: `1px solid ${colorPalette.darkest}CC`,
-          background: `linear-gradient(180deg, ${colorPalette.darkest}CC 0%, ${colorPalette.darkest} 100%)`,
-          boxShadow: `
-            inset 3px 3px 6px ${colorPalette.darkest}40,
-            inset -3px -3px 6px ${colorPalette.darkHC}10
-          `
-        }}>
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
-              <span style={{ color: colorPalette.text }} className="text-lg md:text-base">❯</span>
-              <span style={{ color: colorPalette.text, fontWeight: 'bold' }}>
+      <div className={styles['terminal-status-bar']}>
+        <div className={styles['status-bar-content']}>
+          <div className={styles['status-row']}>
+            <div className={styles['status-group']}>
+              <span className={styles['prompt-symbol']}>❯</span>
+              <span className={styles['status-text']}>
                 {tutorialMessage ? "TUTORIAL" : `M${levelName}`}
               </span>
-              <span style={{ color: `${colorPalette.text}44` }}>{progressChars.separator}</span>
-              <span style={{ 
-                color: stateColor,
-                textShadow: stateGlow,
-                fontWeight: 'bold'
-              }}>
+              <span className="text-gray-500">{progressChars.separator}</span>
+              <span className={`${styles['state-indicator']} state-${dominantState}`}>
                 {dominantState.toUpperCase()}
               </span>
             </div>
             
-            <div className="flex items-center gap-3">
-              <span style={{ color: `${colorPalette.text}44` }}>{progressChars.separator}</span>
-              <span style={{ color: `${colorPalette.text}CC` }}>{currentLevelMoves}ops</span>
+            <div className={styles['status-group']}>
+              <span className="text-gray-500">{progressChars.separator}</span>
+              <span className="text-gray-200">{currentLevelMoves}ops</span>
               {debugMode && (
                 <>
-                  <span style={{ color: `${colorPalette.text}44` }}>{progressChars.separator}</span>
-                  <span style={{ color: '#E0AF68', fontWeight: 'bold' }}>DEBUG</span>
+                  <span className="text-gray-500">{progressChars.separator}</span>
+                  <span className="text-warning font-bold">DEBUG</span>
                 </>
               )}
             </div>
           </div>
 
-          <div className="quantum-progress">
-            <div className="progress-track">
+          <div className={styles['quantum-progress']}>
+            <div 
+              className={styles['progress-track']}
+              style={{ gridTemplateColumns: `repeat(${progressWidth}, 1fr)` }}
+            >
               {Array(progressWidth).fill(null).map((_, i) => (
                 <span
                   key={i}
-                  style={{
-                    color: i < filledComplete ? stateColor : `${colorPalette.text}44`,
-                    textShadow: i < filledComplete ? stateGlow : 'none',
-                    transition: 'all 0.3s ease-in-out'
-                  }}
+                  className={`${i < filledComplete ? `state-${dominantState}` : 'text-gray-500'}`}
                 >
                   {i < filledComplete ? progressChars.filled : progressChars.empty}
                 </span>
@@ -310,140 +264,18 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
 
   return (
     <div 
-      className={`rounded-lg mb-4 font-mono relative overflow-hidden ${visible ? 'opacity-100' : 'opacity-0'}`}
-      style={{ 
-        backgroundColor: colorPalette.darkest,
-        transition: 'opacity 0.3s ease-in-out',
-        boxShadow: `
-          5px 5px 10px ${colorPalette.darkest}40,
-          -5px -5px 10px ${colorPalette.light}CC,
-          inset 0 0 20px ${colorPalette.darkest}80
-        `,
-        border: `1px solid ${colorPalette.darkest}CC`,
-      }}
+      className={`${styles.container} ${visible ? styles.visible : ''} terminal-theme rounded-lg mb-4 font-mono relative overflow-hidden`}
       onTouchStart={() => setShowTimestamps(true)}
       onTouchEnd={() => setShowTimestamps(false)}
       onMouseDown={() => setShowTimestamps(true)}
       onMouseUp={() => setShowTimestamps(false)}
       onMouseLeave={() => setShowTimestamps(false)}
     >
-      <style>
-        {`
-          .quantum-progress {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.5rem;
-            overflow: hidden;
-            font-family: monospace;
-            padding: 0;
-            margin: 0;
-            -webkit-tap-highlight-color: transparent;
-          }
-
-          .progress-track {
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(${window.innerWidth < 768 ? 48 : 96}, 1fr);
-            gap: 0;
-            margin: 0;
-            padding: 0;
-            line-height: 1;
-          }
-
-          .progress-track span {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            margin: 0;
-            height: 28px;
-            touch-action: manipulation;
-          }
-
-          @media (min-width: 768px) {
-            .quantum-progress {
-              font-size: 1rem;
-            }
-            .progress-track span {
-              height: 16px;
-            }
-          }
-
-          .terminal-window {
-            padding: 1.5rem;
-            min-height: min(250px, 40vh);
-            max-height: min(350px, 60vh);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            background: linear-gradient(180deg, ${colorPalette.darkest}F0 0%, ${colorPalette.darkest} 100%);
-            box-shadow: inset 0 0 20px ${colorPalette.darkest}80;
-            overscroll-behavior: contain;
-            scroll-behavior: smooth;
-            touch-action: pan-y;
-          }
-
-          .terminal-line {
-            padding: 0.75rem 0;
-            line-height: 1.6;
-            font-size: 1.125rem;
-            word-break: break-word;
-          }
-
-          .prompt-symbol {
-            font-size: 1.25rem;
-            user-select: none;
-          }
-
-          @media (min-width: 768px) {
-            .terminal-window {
-              padding: 1rem;
-              min-height: 120px;
-              max-height: 200px;
-            }
-            .terminal-line {
-              padding: 0.5rem 0;
-              line-height: 1.5;
-              font-size: 0.875rem;
-            }
-            .prompt-symbol {
-              font-size: 1rem;
-            }
-          }
-
-          /* Improve touch scrolling */
-          @media (hover: none) and (pointer: coarse) {
-            .terminal-window {
-              scrollbar-width: none;
-              -ms-overflow-style: none;
-              -webkit-overflow-scrolling: touch;
-            }
-            .terminal-window::-webkit-scrollbar {
-              display: none;
-            }
-            .terminal-line {
-              touch-action: pan-y;
-            }
-          }
-
-          /* Active states for touch */
-          @media (hover: none) {
-            .terminal-status-bar:active {
-              opacity: 0.8;
-            }
-            .progress-track span:active {
-              transform: scale(1.2);
-            }
-          }
-        `}
-      </style>
       <div className="relative">
-        <div ref={terminalRef} className="terminal-window">
+        <div ref={terminalRef} className={`${styles['terminal-window']} smooth-scroll`}>
           {terminalHistory.map((entry, index) => renderTerminalLine(entry, index))}
-          <div className="terminal-line">
-            <span className="prompt-symbol text-lg md:text-base">❯</span>
+          <div className={styles['terminal-line']}>
+            <span className={styles['prompt-symbol']}>❯</span>
             <span className="typing-effect">█</span>
           </div>
         </div>

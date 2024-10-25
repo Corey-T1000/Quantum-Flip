@@ -1,0 +1,189 @@
+.container {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.container.visible {
+  opacity: 1;
+}
+
+.quantum-progress {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  padding: 0;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.progress-track {
+  width: 100%;
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.progress-track span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  height: 28px;
+  touch-action: manipulation;
+  transition: all 0.3s ease-in-out;
+}
+
+.terminal-window {
+  padding: 1.5rem;
+  min-height: min(250px, 40vh);
+  max-height: min(350px, 60vh);
+  overflow-y: auto;
+  background: var(--terminal-bg-gradient);
+  box-shadow: var(--terminal-shadow-inner);
+}
+
+.terminal-line {
+  padding: 0.75rem 0;
+  line-height: 1.6;
+  font-size: 1.125rem;
+  word-break: break-word;
+}
+
+.terminal-line-content {
+  margin-left: 1rem;
+}
+
+.command-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.help-line {
+  padding: 0.25rem 0;
+  color: var(--text-warning);
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.help-content {
+  margin-top: 0.5rem;
+}
+
+.prompt-symbol {
+  font-size: 1.25rem;
+  user-select: none;
+  color: var(--text-normal);
+}
+
+.level-indicator {
+  font-weight: bold;
+  color: var(--state-color);
+  text-shadow: var(--state-glow);
+}
+
+.terminal-status-bar {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  border-top: var(--status-bar-border);
+  background: var(--status-bar-bg);
+  box-shadow: var(--status-bar-shadow);
+}
+
+.status-bar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-text {
+  font-weight: bold;
+  color: var(--text-normal);
+}
+
+.state-indicator {
+  font-weight: bold;
+  color: var(--state-color);
+  text-shadow: var(--state-glow);
+}
+
+@media (min-width: 768px) {
+  .quantum-progress {
+    font-size: 1rem;
+  }
+
+  .progress-track span {
+    height: 16px;
+  }
+
+  .terminal-window {
+    padding: 1rem;
+    min-height: 120px;
+    max-height: 200px;
+  }
+
+  .terminal-line {
+    padding: 0.5rem 0;
+    line-height: 1.5;
+    font-size: 0.875rem;
+  }
+
+  .prompt-symbol {
+    font-size: 1rem;
+  }
+}
+
+/* Improve touch scrolling */
+@media (hover: none) and (pointer: coarse) {
+  .terminal-window {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .terminal-window::-webkit-scrollbar {
+    display: none;
+  }
+
+  .terminal-line {
+    touch-action: pan-y;
+  }
+}
+
+/* Active states for touch */
+@media (hover: none) {
+  .terminal-status-bar:active {
+    opacity: 0.8;
+  }
+
+  .progress-track span:active {
+    transform: scale(1.2);
+  }
+}

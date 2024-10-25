@@ -1,0 +1,76 @@
+:root {
+  /* Base theme variables - will be overridden by dynamic values */
+  --color-background: #1a1b26;
+  --color-foreground: #a9b1d6;
+  --color-primary: #7aa2f7;
+  --color-secondary: #565f89;
+  --color-highlight: #c0caf5;
+  --color-shadow: #292e42;
+  
+  /* Status colors */
+  --color-success: #9ECE6A;
+  --color-warning: #E0AF68;
+  --color-error: #F7768E;
+  
+  /* Gray scale */
+  --color-gray-100: var(--color-foreground);
+  --color-gray-200: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+  --color-gray-300: color-mix(in srgb, var(--color-foreground) 60%, transparent);
+  --color-gray-400: color-mix(in srgb, var(--color-foreground) 40%, transparent);
+  --color-gray-500: color-mix(in srgb, var(--color-foreground) 27%, transparent);
+  --color-gray-600: color-mix(in srgb, var(--color-background) 80%, transparent);
+  --color-gray-700: var(--color-background);
+  --color-gray-800: color-mix(in srgb, var(--color-shadow) 80%, transparent);
+  --color-gray-900: var(--color-shadow);
+}
+
+/* Terminal theme */
+.terminal-theme {
+  /* Borders */
+  --terminal-border: 1px solid var(--color-gray-600);
+  --terminal-border-glow: 0 0 10px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  
+  /* Shadows */
+  --terminal-shadow-outer: 
+    5px 5px 10px color-mix(in srgb, var(--color-background) 25%, transparent),
+    -5px -5px 10px color-mix(in srgb, var(--color-foreground) 80%, transparent);
+  --terminal-shadow-inner: inset 0 0 20px color-mix(in srgb, var(--color-background) 50%, transparent);
+  
+  /* Backgrounds */
+  --terminal-bg: var(--color-background);
+  --terminal-bg-gradient: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-background) 94%, transparent) 0%,
+    var(--color-background) 100%
+  );
+  
+  /* Text colors */
+  --text-normal: var(--color-gray-100);
+  --text-dim: var(--color-gray-300);
+  --text-highlight: var(--color-primary);
+  --text-success: var(--color-success);
+  --text-warning: var(--color-warning);
+  --text-error: var(--color-error);
+  
+  /* Status bar */
+  --status-bar-border: 1px solid color-mix(in srgb, var(--color-background) 80%, transparent);
+  --status-bar-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-background) 80%, transparent) 0%,
+    var(--color-background) 100%
+  );
+  --status-bar-shadow: 
+    inset 3px 3px 6px color-mix(in srgb, var(--color-background) 25%, transparent),
+    inset -3px -3px 6px color-mix(in srgb, var(--color-shadow) 6%, transparent);
+}
+
+/* State-specific styles */
+.state-light {
+  --state-color: var(--color-primary);
+  --state-glow: 0 0 10px color-mix(in srgb, var(--color-highlight) 20%, transparent);
+}
+
+.state-dark {
+  --state-color: var(--color-secondary);
+  --state-glow: 0 0 10px color-mix(in srgb, var(--color-shadow) 20%, transparent);
+}
