@@ -1,57 +1,37 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Settings, HelpCircle, RotateCcw, Zap, Bug, Target } from 'lucide-react';
-import GameBoard from './components/GameBoard';
-import SettingsModal from './components/SettingsModal';
-import ScreenDisplay, { ScreenDisplayHandle } from './components/ScreenDisplay';
+import React, { useEffect, useRef, useMemo, useCallback } from 'react';
+import { Settings, HelpCircle, RotateCcw, Zap, Bug, Target, RefreshCw } from 'lucide-react';
+import ConnectedGameBoard from './components/ConnectedGameBoard';
+import ConnectedSettingsModal from './components/ConnectedSettingsModal';
+import ConnectedTerminal, { ConnectedTerminalHandle } from './components/terminal/ConnectedTerminal';
 import Confetti from 'react-confetti';
 import { engageNode } from './utils/game/nodeOperations';
 import { scanAlignment, findNextMove } from './utils/game/boardAnalysis';
 import { useAudio } from './utils/audio/index';
-import { BoardState } from './types';
-import { getLevel, getTotalLevels } from './utils/game/levelData';
-import { generateSolvableLevel } from './utils/game/levelGeneration';
-
-const INITIAL_LEVEL = 0;
-
-const colorPalettes = [
-  { light: '#e0e5ec', dark: '#a3b1c6', darkest: '#4a5568', lightHC: '#ffffff', darkHC: '#000000', text: '#ffffff' },
-  { light: '#f0e6db', dark: '#8a7a66', darkest: '#4d3319', lightHC: '#fff5e6', darkHC: '#4d3319', text: '#ffffff' },
-  { light: '#e6f0e8', dark: '#6b8e7b', darkest: '#1a332b', lightHC: '#f0fff5', darkHC: '#1a332b', text: '#ffffff' },
-  { light: '#e8e6f0', dark: '#7b6b8e', darkest: '#2b1a33', lightHC: '#f5f0ff', darkHC: '#2b1a33', text: '#ffffff' },
-];
-
-const helpContent = [
-  'Operator. Access granted to Quantum Matrix. Proceed.',
-  '',
-  '1. Engage a tile. Neighbors react. Disrupt the lattice.',
-  '2. Achieve uniformity. All tiles must align.',
-  '3. Endure. Adapt. Synchronize.',
-  '4. Consult the oracle if needed. Dependence weakens your skills.',
-  '5. Complexity rises. Stabilize the chaotic matrices.',
-  '6. Adjust chromatic resonance via parameter controls.',
-  '7. Modify matrix dimensions to alter challenge intensity.',
-  '',
-  'Warnings:',
-  '• Every action has consequences.',
-  '• True mastery lies in minimal disruption.',
-  '• Visual enhancement mode available for optimal node distinction.',
-  '• Experiment with matrix sizes to find your optimal challenge threshold.'
-];
+import { getTotalLevels, getLevelSolution, resetAllLevels } from './utils/game/levelData';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { setLevel, updateGrid, setGameWon, setHintTile, resetLevel } from './store/gameSlice';
+import { toggleDebugMode } from './store/settingsSlice';
+import { colorPalettes, helpContent, getTutorialMessage } from './constants';
 
 function App() {
-  const [currentLevel, setCurrentLevel] = useState(INITIAL_LEVEL);
-  const [grid, setGrid] = useState<BoardState>(() => getLevel(INITIAL_LEVEL));
-  const [moveCount, setMoveCount] = useState(0);
-  const [gameWon, setGameWon] = useState(false);
-  const [hintTile, setHintTile] = useState<[number, number] | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [colorPaletteIndex, setColorPaletteIndex] = useState(0);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [highContrastMode, setHighContrastMode] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [debugMode, setDebugMode] = useState(false);
-  const [solution, setSolution] = useState<[number, number][]>([]);
-  const screenDisplayRef = useRef<ScreenDisplayHandle>(null);
+  const dispatch = useAppDispatch();
+  const {
+    currentLevel,
+    grid,
+    moveCount,
+    gameWon,
+    hintTile
+  } = useAppSelector(state => state.game);
+  const {
+    colorPaletteIndex,
+    highContrastMode,
+    debugMode
+  } = useAppSelector(state => state.settings);
+
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [showConfetti, setShowConfetti] = React.useState(false);
+  const [solution, setSolution] = React.useState<[number, number][]>([]);
+  const terminalRef = useRef<ConnectedTerminalHandle>(null);
 
   const { playTileInteractionSound, playLevelCompletionSound, isAudioLoaded } = useAudio();
 
@@ -60,129 +40,131 @@ function App() {
     text: highContrastMode ? colorPalettes[colorPaletteIndex].lightHC : colorPalettes[colorPaletteIndex].text,
   }), [colorPaletteIndex, highContrastMode]);
 
-  // Calculate board state information
   const boardState = useMemo(() => {
     const totalTiles = grid.length * grid.length;
-    const lightTiles = grid.flat().filter(tile => tile).length;
+    const lightTiles = grid.flat().filter((tile: boolean) => tile).length;
     const darkTiles = totalTiles - lightTiles;
     const lightRatio = lightTiles / totalTiles;
     const darkRatio = darkTiles / totalTiles;
     const dominantState: 'light' | 'dark' = lightRatio >= darkRatio ? 'light' : 'dark';
-    const dominantRatio = Math.max(lightRatio, darkRatio);
+    const progress = Math.abs(lightRatio - 0.5) * 2;
     
     return {
       dominantState,
-      progress: dominantRatio
+      progress
     } as const;
   }, [grid]);
 
-  const resetLevel = useCallback(() => {
-    if (debugMode) {
-      const { board, solution } = generateSolvableLevel(grid.length, Math.max(2, currentLevel + 1));
-      setGrid(board);
-      setSolution(solution);
-    } else {
-      setGrid(getLevel(currentLevel));
-      setSolution([]);
-    }
-    setMoveCount(0);
-    setGameWon(false);
-    setHintTile(null);
-  }, [currentLevel, debugMode, grid.length]);
+  const tutorialMessage = useMemo(() => 
+    getTutorialMessage(currentLevel, moveCount),
+    [currentLevel, moveCount]
+  );
+
+  const handleResetLevel = useCallback(() => {
+    dispatch(resetLevel());
+    setSolution(debugMode ? getLevelSolution(currentLevel) : []);
+  }, [currentLevel, debugMode, dispatch]);
 
   const handleTileClick = useCallback((row: number, col: number) => {
     if (gameWon) return;
     if (isAudioLoaded()) {
       playTileInteractionSound();
     }
-    setGrid(prevGrid => {
-      const newGrid = engageNode(prevGrid, row, col);
-      return newGrid;
-    });
-    setMoveCount(prevCount => prevCount + 1);
-    setHintTile(null);
-  }, [gameWon, playTileInteractionSound, isAudioLoaded]);
-
-  useEffect(() => {
-    if (!gameWon) {
-      const isAligned = scanAlignment(grid);
-      if (isAligned) {
-        setGameWon(true);
-        setShowConfetti(true);
-        setHintTile(null);
-        if (isAudioLoaded()) {
-          playLevelCompletionSound();
-        }
-        setTimeout(() => setShowConfetti(false), 5000);
-      }
+    const newGrid = engageNode(grid, row, col);
+    dispatch(updateGrid(newGrid));
+    
+    if (currentLevel > 4) {
+      dispatch(setHintTile(null));
     }
-  }, [grid, gameWon, playLevelCompletionSound, isAudioLoaded]);
-
-  const nextLevel = useCallback(() => {
-    const nextLevelIndex = currentLevel + 1;
-    if (nextLevelIndex < getTotalLevels()) {
-      setCurrentLevel(nextLevelIndex);
-      if (debugMode) {
-        const { board, solution } = generateSolvableLevel(grid.length, Math.max(2, nextLevelIndex + 1));
-        setGrid(board);
-        setSolution(solution);
-      } else {
-        setGrid(getLevel(nextLevelIndex));
-        setSolution([]);
-      }
-      setMoveCount(0);
-      setGameWon(false);
-      setHintTile(null);
-    }
-  }, [currentLevel, debugMode, grid.length]);
+  }, [gameWon, playTileInteractionSound, isAudioLoaded, currentLevel, grid, dispatch]);
 
   const handleRequestHint = useCallback(() => {
     if (gameWon) return;
     
-    if (hintTile !== null) {
-      setHintTile(null);
+    if (currentLevel <= 4) {
+      if (currentLevel === 1 && moveCount >= 1) {
+        if (hintTile !== null) {
+          dispatch(setHintTile(null));
+        } else {
+          const solution = getLevelSolution(currentLevel);
+          if (solution.length > 0) {
+            dispatch(setHintTile(solution[0]));
+          }
+        }
+      }
       return;
     }
-
-    const nextMove = findNextMove(grid);
     
-    if (nextMove) {
-      setHintTile(nextMove);
+    if (hintTile !== null) {
+      dispatch(setHintTile(null));
     } else {
-      console.log('No improving move found - premium hint opportunity');
-      setHintTile(null);
+      const nextMove = findNextMove(grid);
+      if (nextMove) {
+        dispatch(setHintTile(nextMove));
+      }
     }
-  }, [gameWon, grid, hintTile]);
+  }, [gameWon, grid, hintTile, currentLevel, moveCount, dispatch]);
 
   const handleHintUsed = useCallback(() => {
-    setHintTile(null);
-  }, []);
+    if (currentLevel > 4) {
+      dispatch(setHintTile(null));
+    }
+  }, [currentLevel, dispatch]);
 
   useEffect(() => {
-    if (gameWon) {
-      const timer = setTimeout(nextLevel, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [gameWon, nextLevel]);
+    let progressionTimer: NodeJS.Timeout | null = null;
+    let confettiTimer: NodeJS.Timeout | null = null;
 
-  const toggleDebugMode = useCallback(() => {
-    setDebugMode(prev => {
-      const newDebugMode = !prev;
-      if (newDebugMode) {
-        const { board, solution } = generateSolvableLevel(grid.length, Math.max(2, currentLevel + 1));
-        setGrid(board);
-        setSolution(solution);
-      } else {
-        setGrid(getLevel(currentLevel));
-        setSolution([]);
+    const handleLevelWin = () => {
+      dispatch(setGameWon(true));
+      setShowConfetti(true);
+      dispatch(setHintTile(null));
+      if (isAudioLoaded()) {
+        playLevelCompletionSound();
       }
-      return newDebugMode;
-    });
-  }, [currentLevel, grid.length]);
+
+      confettiTimer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 1500);
+
+      progressionTimer = setTimeout(() => {
+        const nextLevelIndex = currentLevel + 1;
+        if (nextLevelIndex < getTotalLevels()) {
+          dispatch(setLevel(nextLevelIndex));
+          setSolution(debugMode ? getLevelSolution(nextLevelIndex) : []);
+        }
+      }, 2000);
+    };
+
+    if (!gameWon) {
+      const isAligned = scanAlignment(grid);
+      if (isAligned) {
+        handleLevelWin();
+      }
+    }
+
+    return () => {
+      if (confettiTimer) clearTimeout(confettiTimer);
+      if (progressionTimer) clearTimeout(progressionTimer);
+    };
+  }, [grid, gameWon, playLevelCompletionSound, isAudioLoaded, currentLevel, debugMode, dispatch]);
+
+  const handleNextLevel = useCallback(() => {
+    const nextLevelIndex = currentLevel + 1;
+    if (nextLevelIndex < getTotalLevels()) {
+      dispatch(setLevel(nextLevelIndex));
+      setSolution(debugMode ? getLevelSolution(nextLevelIndex) : []);
+    }
+  }, [currentLevel, debugMode, dispatch]);
+
+  const handleToggleDebugMode = useCallback(() => {
+    dispatch(toggleDebugMode());
+    setSolution(debugMode ? [] : getLevelSolution(currentLevel));
+  }, [currentLevel, debugMode, dispatch]);
 
   const handleShowHelp = useCallback(() => {
-    if (screenDisplayRef.current) {
-      screenDisplayRef.current.addTerminalEntry({
+    if (terminalRef.current) {
+      terminalRef.current.addTerminalEntry({
         timestamp: new Date().toLocaleTimeString('en-US', { 
           hour12: false,
           hour: '2-digit',
@@ -194,6 +176,14 @@ function App() {
       });
     }
   }, []);
+
+  const handleResetAllLevels = useCallback(() => {
+    if (window.confirm('This will regenerate all levels. Are you sure?')) {
+      resetAllLevels();
+      dispatch(setLevel(0));
+      setSolution(debugMode ? getLevelSolution(0) : []);
+    }
+  }, [debugMode, dispatch]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8" style={{ backgroundColor: currentColorPalette.light }}>
@@ -209,43 +199,27 @@ function App() {
             -20px -20px 60px ${currentColorPalette.light}CC
           `
         }}>
-        <ScreenDisplay
-          ref={screenDisplayRef}
+        <ConnectedTerminal
+          ref={terminalRef}
           levelName={`Level ${currentLevel + 1}`}
           moveCount={moveCount}
-          gameWon={gameWon}
-          colorPalette={currentColorPalette}
-          tutorialMessage={null}
+          tutorialMessage={tutorialMessage}
           debugMode={debugMode}
           progress={boardState.progress}
           dominantState={boardState.dominantState}
         />
         <div className="my-6">
-          <GameBoard
-            grid={grid}
+          <ConnectedGameBoard
             onTileClick={handleTileClick}
-            hintTile={hintTile}
-            colorPalette={highContrastMode ? {
-              light: currentColorPalette.lightHC,
-              dark: currentColorPalette.darkHC,
-              lightHC: currentColorPalette.lightHC,
-              darkHC: currentColorPalette.darkHC,
-            } : {
-              light: currentColorPalette.light,
-              dark: currentColorPalette.dark,
-              lightHC: currentColorPalette.lightHC,
-              darkHC: currentColorPalette.darkHC,
-            }}
-            debugMode={debugMode}
-            solution={solution}
             onHintUsed={handleHintUsed}
+            solution={solution}
           />
         </div>
       </div>
       <div className="mt-4 flex justify-center items-center gap-8">
         <button
           className="control-button"
-          onClick={resetLevel}
+          onClick={handleResetLevel}
           title="Reset Quantum State"
           style={{
             backgroundColor: currentColorPalette.light,
@@ -308,94 +282,68 @@ function App() {
         </button>
 
         {process.env.NODE_ENV === 'development' && (
-          <button
-            className={`control-button ${debugMode ? 'active' : ''}`}
-            onClick={toggleDebugMode}
-            title="Toggle Debug Protocol"
-            style={{
-              backgroundColor: currentColorPalette.light,
-              color: currentColorPalette.darkest,
-              boxShadow: debugMode ?
-                `inset 3px 3px 6px rgba(0, 0, 0, 0.2),
-                 inset -3px -3px 6px rgba(255, 255, 255, 0.2),
-                 0px 0px 10px rgba(0, 0, 0, 0.1)` :
-                `5px 5px 10px ${currentColorPalette.darkest}40,
-                 -5px -5px 10px ${currentColorPalette.light}CC`
-            }}
-          >
-            <Bug size={24} />
-          </button>
-        )}
+          <>
+            <button
+              className={`control-button ${debugMode ? 'active' : ''}`}
+              onClick={handleToggleDebugMode}
+              title="Toggle Debug Protocol"
+              style={{
+                backgroundColor: currentColorPalette.light,
+                color: currentColorPalette.darkest,
+                boxShadow: debugMode ?
+                  `inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+                   inset -3px -3px 6px rgba(255, 255, 255, 0.2),
+                   0px 0px 10px rgba(0, 0, 0, 0.1)` :
+                  `5px 5px 10px ${currentColorPalette.darkest}40,
+                   -5px -5px 10px ${currentColorPalette.light}CC`
+              }}
+            >
+              <Bug size={24} />
+            </button>
 
-        {debugMode && process.env.NODE_ENV === 'development' && (
-          <button
-            className="control-button"
-            onClick={nextLevel}
-            title="Force Next Level"
-            style={{
-              backgroundColor: currentColorPalette.light,
-              color: currentColorPalette.darkest,
-              boxShadow: `
-                5px 5px 10px ${currentColorPalette.darkest}40,
-                -5px -5px 10px ${currentColorPalette.light}CC
-              `
-            }}
-          >
-            <Target size={24} />
-          </button>
+            {debugMode && (
+              <>
+                <button
+                  className="control-button"
+                  onClick={handleNextLevel}
+                  title="Force Next Level"
+                  style={{
+                    backgroundColor: currentColorPalette.light,
+                    color: currentColorPalette.darkest,
+                    boxShadow: `
+                      5px 5px 10px ${currentColorPalette.darkest}40,
+                      -5px -5px 10px ${currentColorPalette.light}CC
+                    `
+                  }}
+                >
+                  <Target size={24} />
+                </button>
+                <button
+                  className="control-button"
+                  onClick={handleResetAllLevels}
+                  title="Regenerate All Levels"
+                  style={{
+                    backgroundColor: currentColorPalette.light,
+                    color: currentColorPalette.darkest,
+                    boxShadow: `
+                      5px 5px 10px ${currentColorPalette.darkest}40,
+                      -5px -5px 10px ${currentColorPalette.light}CC
+                    `
+                  }}
+                >
+                  <RefreshCw size={24} />
+                </button>
+              </>
+            )}
+          </>
         )}
       </div>
-      <SettingsModal
+      <ConnectedSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         colorPalettes={colorPalettes}
-        selectedPaletteIndex={colorPaletteIndex}
-        onColorChange={setColorPaletteIndex}
         textColor={currentColorPalette.darkest}
-        highContrastMode={highContrastMode}
-        onHighContrastToggle={() => setHighContrastMode(prev => !prev)}
-        volume={volume}
-        onVolumeChange={setVolume}
       />
-      <style>
-        {`
-          .control-button {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-          }
-
-          .control-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
-            border-radius: 15px;
-            opacity: 0.5;
-          }
-
-          .control-button:active {
-            transform: scale(0.95);
-          }
-
-          .control-button.active {
-            transform: scale(0.95);
-            box-shadow: 
-              inset 3px 3px 6px rgba(0, 0, 0, 0.2),
-              inset -3px -3px 6px rgba(255, 255, 255, 0.2),
-              0px 0px 10px rgba(0, 0, 0, 0.1);
-          }
-        `}
-      </style>
     </div>
   );
 }

@@ -1,41 +1,60 @@
+import { css } from '@emotion/css';
 import { ColorPalette } from './types';
 
-export const TerminalStyles = (colorPalette: ColorPalette) => {
-  const charm = {
-    background: colorPalette.darkest,
-    foreground: colorPalette.text,
-    primary: colorPalette.light,
-    secondary: colorPalette.dark,
-    highlight: colorPalette.lightHC,
-    shadow: colorPalette.darkHC,
-    success: '#9ECE6A',
-    warning: '#E0AF68',
-    error: '#F7768E',
-    gray100: colorPalette.text,
-    gray200: `${colorPalette.text}CC`,
-    gray300: `${colorPalette.text}99`,
-    gray400: `${colorPalette.text}66`,
-    gray500: `${colorPalette.text}44`,
-    gray600: `${colorPalette.darkest}CC`,
-    gray700: colorPalette.darkest,
-    gray800: `${colorPalette.darkHC}CC`,
-    gray900: colorPalette.darkHC,
-  };
+export const getTerminalStyles = (colorPalette: ColorPalette) => css`
+  .terminal-window {
+    padding: 1.5rem;
+    min-height: min(250px, 40vh);
+    max-height: min(350px, 60vh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: linear-gradient(180deg, ${colorPalette.darkest}F0 0%, ${colorPalette.darkest} 100%);
+    box-shadow: inset 0 0 20px ${colorPalette.darkest}80;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+    touch-action: pan-y;
+  }
 
-  return {
-    charm,
-    text: {
-      normal: { color: charm.gray100 },
-      dim: { color: charm.gray300 },
-      highlight: { color: charm.primary },
-      success: { color: charm.success },
-      warning: { color: charm.warning },
-      error: { color: charm.error },
-    },
-    border: {
-      normal: `1px solid ${charm.gray600}`,
-      highlight: `1px solid ${charm.primary}`,
-      glow: `0 0 10px ${charm.primary}33`,
-    },
-  };
-};
+  .terminal-line {
+    margin-bottom: 0.5rem;
+    color: ${colorPalette.text};
+  }
+
+  .timestamp {
+    color: ${colorPalette.dark};
+    margin-right: 0.5rem;
+  }
+
+  .prompt-symbol {
+    color: ${colorPalette.text};
+    margin-right: 0.5rem;
+  }
+
+  .typing-effect {
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @media (min-width: 768px) {
+    .terminal-window {
+      padding: 1rem;
+      min-height: 120px;
+      max-height: 200px;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .terminal-window {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .terminal-window::-webkit-scrollbar {
+      display: none;
+    }
+  }
+`;

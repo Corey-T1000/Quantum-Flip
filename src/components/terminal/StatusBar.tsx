@@ -1,99 +1,52 @@
 import React from 'react';
+import { css } from '@emotion/css';
+import { getTerminalStyles } from './terminalStyles';
 import { ColorPalette } from './types';
-import { TerminalStyles } from './terminalStyles';
 
 interface StatusBarProps {
   levelName: string;
-  dominantState: 'light' | 'dark';
-  currentLevelMoves: number;
+  moveCount: number;
+  tutorialMessage: string | null;
   debugMode: boolean;
   progress: number;
-  tutorialMessage: string | null;
+  dominantState: 'light' | 'dark';
   colorPalette: ColorPalette;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
   levelName,
-  dominantState,
-  currentLevelMoves,
+  moveCount,
+  tutorialMessage,
   debugMode,
   progress,
-  tutorialMessage,
-  colorPalette,
+  dominantState,
+  colorPalette
 }) => {
-  const styles = TerminalStyles(colorPalette);
-  const progressChars = {
-    empty: '·',
-    filled: '•',
-    separator: '·'
-  };
-
-  // Adjust progress width based on container width
-  const progressWidth = window.innerWidth < 768 ? 48 : 96;
-  const filledWidth = Math.floor(progress * progressWidth);
+  const terminalStyles = getTerminalStyles(colorPalette);
 
   return (
-    <div className="terminal-status-bar font-mono text-base md:text-sm">
-      <div className="flex flex-col gap-2 px-4 py-3 md:py-2" style={{ 
-        borderTop: `1px solid ${colorPalette.darkest}CC`,
-        background: `linear-gradient(180deg, ${colorPalette.darkest}CC 0%, ${colorPalette.darkest} 100%)`,
-        boxShadow: `
-          inset 3px 3px 6px ${colorPalette.darkest}40,
-          inset -3px -3px 6px ${colorPalette.darkHC}10
-        `
-      }}>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <span style={{ color: colorPalette.text }} className="text-lg md:text-base">❯</span>
-            <span style={{ color: colorPalette.text, fontWeight: 'bold' }}>
-              {tutorialMessage ? "TUTORIAL" : `M${levelName}`}
-            </span>
-            <span style={{ color: `${colorPalette.text}44` }}>{progressChars.separator}</span>
-            <span style={{ 
-              color: dominantState === 'light' ? colorPalette.light : colorPalette.dark,
-              textShadow: `0 0 10px ${dominantState === 'light' ? colorPalette.lightHC : colorPalette.darkHC}33`,
-              fontWeight: 'bold'
-            }}>
-              {dominantState.toUpperCase()}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <span style={{ color: `${colorPalette.text}44` }}>{progressChars.separator}</span>
-            <span style={{ color: `${colorPalette.text}CC` }}>{currentLevelMoves}ops</span>
-            {debugMode && (
-              <>
-                <span style={{ color: `${colorPalette.text}44` }}>{progressChars.separator}</span>
-                <span style={{ color: '#E0AF68', fontWeight: 'bold' }}>DEBUG</span>
-              </>
-            )}
-          </div>
+    <div className={css`${terminalStyles} .terminal-window`}>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <span>{levelName}</span>
+          <span>Moves: {moveCount}</span>
         </div>
-
-        <div className="quantum-progress">
-          <div className="progress-track">
-            {Array(progressWidth).fill(null).map((_, i) => {
-              const isFilled = i < filledWidth;
-              return (
-                <span
-                  key={i}
-                  style={{
-                    color: isFilled ? 
-                      (dominantState === 'light' ? colorPalette.light : colorPalette.dark) :
-                      `${colorPalette.text}44`,
-                    textShadow: isFilled ? 
-                      `0 0 10px ${dominantState === 'light' ? colorPalette.lightHC : colorPalette.darkHC}33` : 
-                      'none',
-                    transition: 'all 0.3s ease-in-out'
-                  }}
-                >
-                  {isFilled ? progressChars.filled : progressChars.empty}
-                </span>
-              );
-            })}
-          </div>
+        <div className="flex items-center space-x-4">
+          {debugMode && (
+            <span>
+              Progress: {(progress * 100).toFixed(1)}%
+            </span>
+          )}
+          <span>
+            State: {dominantState}
+          </span>
         </div>
       </div>
+      {tutorialMessage && (
+        <div className="mt-2">
+          {tutorialMessage}
+        </div>
+      )}
     </div>
   );
 };
