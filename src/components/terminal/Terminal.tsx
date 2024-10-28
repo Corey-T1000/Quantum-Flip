@@ -1,20 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { css } from '@emotion/css';
-import TerminalLine from './TerminalLine';
+import { TerminalLine } from './TerminalLine';
 import StatusBar from './StatusBar';
-import { getTerminalStyles } from './terminalStyles';
-import { ColorPalette, TerminalEntry } from './types';
-
-interface TerminalProps {
-  entries: TerminalEntry[];
-  levelName: string;
-  moveCount: number;
-  tutorialMessage: string | null;
-  debugMode: boolean;
-  progress: number;
-  dominantState: 'light' | 'dark';
-  colorPalette: ColorPalette;
-}
+import { terminalStyles } from './terminalStyles';
+import { TerminalProps, TerminalEntry } from './types';
 
 const Terminal: React.FC<TerminalProps> = ({
   entries,
@@ -24,9 +12,18 @@ const Terminal: React.FC<TerminalProps> = ({
   debugMode,
   progress,
   dominantState,
-  colorPalette
+  colorPalette,
+  onReset,
+  onRequestHint,
+  onShowHelp,
+  onOpenSettings,
+  onToggleDebug,
+  onNextLevel,
+  onResetAllLevels,
+  hintTile
 }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
+  const styles = terminalStyles(colorPalette);
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -34,12 +31,10 @@ const Terminal: React.FC<TerminalProps> = ({
     }
   }, [entries]);
 
-  const terminalStyles = getTerminalStyles(colorPalette);
-
   return (
     <div>
-      <div ref={terminalRef} className={css`${terminalStyles} .terminal-window`}>
-        {entries.map((entry, index) => (
+      <div ref={terminalRef} className={styles.terminalWindow}>
+        {entries.map((entry: TerminalEntry, index: number) => (
           <TerminalLine
             key={index}
             timestamp={entry.timestamp}
@@ -57,6 +52,14 @@ const Terminal: React.FC<TerminalProps> = ({
         progress={progress}
         dominantState={dominantState}
         colorPalette={colorPalette}
+        onReset={onReset}
+        onRequestHint={onRequestHint}
+        onShowHelp={onShowHelp}
+        onOpenSettings={onOpenSettings}
+        onToggleDebug={onToggleDebug}
+        onNextLevel={onNextLevel}
+        onResetAllLevels={onResetAllLevels}
+        hintTile={hintTile}
       />
     </div>
   );

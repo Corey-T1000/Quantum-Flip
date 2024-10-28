@@ -11,7 +11,7 @@ export const helpContent = [
   '1. Engage a tile. Neighbors react. Disrupt the lattice.',
   '2. Achieve uniformity. All tiles must align.',
   '3. Endure. Adapt. Synchronize.',
-  '4. Consult the oracle if needed. Dependence weakens your skills.',
+  '4. Consult the oracle (⚡) if needed. Dependence weakens your skills.',
   '5. Complexity rises. Stabilize the chaotic matrices.',
   '6. Adjust chromatic resonance via parameter controls.',
   '7. Modify matrix dimensions to alter challenge intensity.',
@@ -33,14 +33,14 @@ export const getTutorialMessage = (level: number, moveCount: number): string | n
       'Your goal: Make all nodes uniform - either all light or all dark.'
     ],
     1: [
-      'Excellent. For more complex patterns, you can request guidance.',
+      'Excellent. This level introduces the Oracle guidance system.',
       'Click the lightning bolt icon (⚡) to reveal the Oracle\'s suggestion.',
-      'Try using the Oracle now to find the solution.'
+      'The Oracle will highlight the recommended move with a pulsing glow.'
     ],
     2: [
       'This level introduces triangular patterns.',
       'Start with a corner, then work your way through the triangle.',
-      'Remember: The Oracle is available if needed.'
+      'Remember: The Oracle (⚡) is available if needed.'
     ],
     3: [
       'Diagonal sequences require precise timing.',

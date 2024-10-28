@@ -1,52 +1,106 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { getTerminalStyles } from './terminalStyles';
-import { ColorPalette } from './types';
-
-interface StatusBarProps {
-  levelName: string;
-  moveCount: number;
-  tutorialMessage: string | null;
-  debugMode: boolean;
-  progress: number;
-  dominantState: 'light' | 'dark';
-  colorPalette: ColorPalette;
-}
+import { Settings, HelpCircle, RotateCcw, Zap, Bug, Target, RefreshCw } from 'lucide-react';
+import { terminalStyles } from './terminalStyles';
+import { StatusBarProps } from './types';
 
 const StatusBar: React.FC<StatusBarProps> = ({
   levelName,
   moveCount,
-  tutorialMessage,
   debugMode,
   progress,
   dominantState,
-  colorPalette
+  colorPalette,
+  onReset,
+  onRequestHint,
+  onShowHelp,
+  onOpenSettings,
+  onToggleDebug,
+  onNextLevel,
+  onResetAllLevels,
+  hintTile
 }) => {
-  const terminalStyles = getTerminalStyles(colorPalette);
+  const styles = terminalStyles(colorPalette);
 
   return (
-    <div className={css`${terminalStyles} .terminal-window`}>
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <span>{levelName}</span>
-          <span>Moves: {moveCount}</span>
+    <div className={styles.statusBar}>
+      <div className={styles.statusContent}>
+        <div className={styles.statusGroup}>
+          <span className={styles.statusItem}>{levelName}</span>
+          <span className={styles.statusItem}>Moves: {moveCount}</span>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className={styles.statusGroup}>
           {debugMode && (
-            <span>
+            <span className={styles.statusItem}>
               Progress: {(progress * 100).toFixed(1)}%
             </span>
           )}
-          <span>
+          <span className={styles.statusItem}>
             State: {dominantState}
           </span>
         </div>
       </div>
-      {tutorialMessage && (
-        <div className="mt-2">
-          {tutorialMessage}
-        </div>
-      )}
+
+      <div className={styles.controlButtons}>
+        <button
+          className={styles.controlButton}
+          onClick={onReset}
+          title="Reset Quantum State"
+        >
+          <RotateCcw />
+        </button>
+        <button
+          className={`${styles.controlButton} ${hintTile !== null ? 'active' : ''}`}
+          onClick={onRequestHint}
+          title="Request Oracle Guidance"
+        >
+          <Zap />
+        </button>
+        <button
+          className={styles.controlButton}
+          onClick={onShowHelp}
+          title="Access Protocol Manual"
+        >
+          <HelpCircle />
+        </button>
+        <button
+          className={styles.controlButton}
+          onClick={onOpenSettings}
+          title="Settings"
+        >
+          <Settings />
+        </button>
+
+        {process.env.NODE_ENV === 'development' && onToggleDebug && (
+          <>
+            <button
+              className={`${styles.controlButton} ${debugMode ? 'active' : ''}`}
+              onClick={onToggleDebug}
+              title="Toggle Debug Protocol"
+            >
+              <Bug />
+            </button>
+
+            {debugMode && onNextLevel && onResetAllLevels && (
+              <>
+                <button
+                  className={styles.controlButton}
+                  onClick={onNextLevel}
+                  title="Force Next Level"
+                >
+                  <Target />
+                </button>
+                <button
+                  className={styles.controlButton}
+                  onClick={onResetAllLevels}
+                  title="Regenerate All Levels"
+                >
+                  <RefreshCw />
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

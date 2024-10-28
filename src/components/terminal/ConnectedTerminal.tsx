@@ -19,6 +19,14 @@ interface ConnectedTerminalProps {
   debugMode: boolean;
   progress: number;
   dominantState: 'light' | 'dark';
+  onReset: () => void;
+  onRequestHint: () => void;
+  onShowHelp: () => void;
+  onOpenSettings: () => void;
+  onToggleDebug?: () => void;
+  onNextLevel?: () => void;
+  onResetAllLevels?: () => void;
+  hintTile: [number, number] | null;
 }
 
 const ConnectedTerminal = forwardRef<ConnectedTerminalHandle, ConnectedTerminalProps>(({
@@ -27,7 +35,15 @@ const ConnectedTerminal = forwardRef<ConnectedTerminalHandle, ConnectedTerminalP
   tutorialMessage,
   debugMode,
   progress,
-  dominantState
+  dominantState,
+  onReset,
+  onRequestHint,
+  onShowHelp,
+  onOpenSettings,
+  onToggleDebug,
+  onNextLevel,
+  onResetAllLevels,
+  hintTile
 }, ref) => {
   const dispatch = useAppDispatch();
   const {
@@ -77,6 +93,14 @@ const ConnectedTerminal = forwardRef<ConnectedTerminalHandle, ConnectedTerminalP
       progress={progress}
       dominantState={dominantState}
       colorPalette={currentColorPalette}
+      onReset={onReset}
+      onRequestHint={onRequestHint}
+      onShowHelp={onShowHelp}
+      onOpenSettings={onOpenSettings}
+      onToggleDebug={onToggleDebug}
+      onNextLevel={onNextLevel}
+      onResetAllLevels={onResetAllLevels}
+      hintTile={hintTile}
     />
   );
 });

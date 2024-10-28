@@ -37,16 +37,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
           return (
             <button
               key={`${rowIndex}-${colIndex}`}
-              className="aspect-square rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none"
+              className={`aspect-square rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none ${isHint ? 'animate-pulse' : ''}`}
               onClick={() => handleTileClick(rowIndex, colIndex)}
               style={{
                 backgroundColor: tile ? colorPalette.light : colorPalette.dark,
                 boxShadow: isHint ? 
-                  `0 0 15px ${colorPalette.darkest}80, 
-                   0 0 30px ${colorPalette.darkest}40` : 
+                  `0 0 15px ${colorPalette.darkest}, 
+                   0 0 30px ${colorPalette.darkest}, 
+                   inset 0 0 20px ${colorPalette.darkest}` : 
                   `inset 3px 3px 6px ${tile ? colorPalette.darkest + '1A' : colorPalette.darkest + '40'},
                    inset -3px -3px 6px ${tile ? colorPalette.light + 'CC' : colorPalette.dark + 'CC'}`,
-                border: isSolution ? `2px solid ${colorPalette.darkest}` : 'none'
+                border: isHint ? `2px solid ${colorPalette.darkest}` : 
+                        isSolution ? `2px solid ${colorPalette.darkest}` : 'none',
+                transform: isHint ? 'scale(1.05)' : 'none'
               }}
             />
           );

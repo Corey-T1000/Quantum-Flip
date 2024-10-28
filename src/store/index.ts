@@ -8,7 +8,7 @@ import { terminalReducer } from './terminalSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['game', 'settings'] // Only persist game and settings state
+  whitelist: ['settings', 'game'] // Only persist settings and game state
 };
 
 const persistedGameReducer = persistReducer(persistConfig, gameReducer);
@@ -22,7 +22,9 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false // Disable serializable check for redux-persist
+      serializableCheck: {
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE']
+      }
     })
 });
 

@@ -10,16 +10,26 @@
 - Web Audio API for sound effects
 - Custom level generation algorithm
 
+## Testing
+- Framework: Jest
+- UI Testing: React Testing Library
+- Type Checking: TypeScript
+- Style Testing: Emotion CSS class verification
+- Coverage: Component, interaction, and animation tests
+
 ## DevOps
 - Build Tool: Vite
-- Testing: Jest
-- Type Checking: TypeScript
 - Linting: ESLint
+- Type Checking: TypeScript
+- Test Runner: Jest
 
 ## Architecture
 ### Components
 - GameBoard: Main game grid interface
 - Terminal: Command-line style feedback
+  - Tested animations and interactions
+  - Verified timestamp formatting
+  - Style and layout validation
 - Settings: User preferences and accessibility
 - Audio: Sound effect management
 
@@ -33,6 +43,13 @@
 2. Actions dispatched to Redux store
 3. State updates trigger UI changes
 4. Changes persisted to localStorage
+
+### Testing Strategy
+- Unit Tests: Component and state management
+- Integration Tests: Component interactions
+- Style Tests: CSS-in-JS validation
+- Animation Tests: Class-based verification
+- Timestamp Tests: ISO format validation
 
 ### External Dependencies
 - AWS S3 for file storage

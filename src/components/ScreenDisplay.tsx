@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import Terminal, { TerminalHandle } from './terminal/Terminal';
-import { TerminalEntry } from './terminal/types';
+import Terminal from './terminal/Terminal';
+import { TerminalEntry, TerminalProps } from './terminal/types';
 
 interface ScreenDisplayProps {
   levelName: string;
@@ -24,6 +24,10 @@ export interface ScreenDisplayHandle {
   addTerminalEntry: (entry: TerminalEntry) => void;
 }
 
+interface TerminalRefHandle {
+  addTerminalEntry: (entry: TerminalEntry) => void;
+}
+
 const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props, ref) => {
   const {
     levelName,
@@ -38,10 +42,9 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
 
   const [visible, setVisible] = useState(false);
   const [terminalHistory, setTerminalHistory] = useState<TerminalEntry[]>([]);
-  const [showTimestamps, setShowTimestamps] = useState(false);
   const [currentLevelMoves, setCurrentLevelMoves] = useState(0);
   const prevLevelRef = useRef(levelName);
-  const terminalRef = useRef<TerminalHandle>(null);
+  const terminalRef = useRef<TerminalRefHandle>(null);
 
   const getTimestamp = () => {
     const now = new Date();
@@ -67,8 +70,8 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
     const initMessages: TerminalEntry[] = [
       {
         timestamp: getTimestamp(),
-        content: '✨ Quantum Matrix Protocol initialized',
-        type: 'system'
+        content: ['✨ Quantum Matrix Protocol initialized'],
+        type: 'help'
       }
     ];
     setTerminalHistory(initMessages);
@@ -80,54 +83,46 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
       if (prevLevelRef.current && currentLevelMoves > 0) {
         addTerminalEntry({
           timestamp: getTimestamp(),
-          content: `matrix.modifyState()`,
-          type: 'command',
-          count: currentLevelMoves,
-          level: prevLevelRef.current,
-          state: dominantState
+          content: [`Matrix state modified (${currentLevelMoves} moves)`],
+          type: 'help'
         });
       }
       setCurrentLevelMoves(0);
       prevLevelRef.current = levelName;
     }
-  }, [levelName, dominantState]);
+  }, [levelName, currentLevelMoves]);
 
   useEffect(() => {
     if (moveCount > 0) {
       setCurrentLevelMoves(prev => prev + 1);
-      setTerminalHistory(prev => {
-        const lastEntry = prev[prev.length - 1];
-        if (lastEntry?.type === 'command' && lastEntry.level === levelName) {
-          const updatedHistory = [...prev];
-          updatedHistory[prev.length - 1] = {
-            ...lastEntry,
-            count: currentLevelMoves + 1,
-            state: dominantState
-          };
-          return updatedHistory;
-        } else {
-          return [...prev, {
-            timestamp: getTimestamp(),
-            content: 'matrix.modifyState()',
-            type: 'command',
-            count: 1,
-            level: levelName,
-            state: dominantState
-          }];
-        }
-      });
     }
-  }, [moveCount, levelName, dominantState]);
+  }, [moveCount]);
 
   useEffect(() => {
     if (gameWon) {
       addTerminalEntry({
         timestamp: getTimestamp(),
-        content: '✨ Matrix alignment achieved. Proceeding to next quantum state...',
-        type: 'system'
+        content: ['✨ Matrix alignment achieved. Proceeding to next quantum state...'],
+        type: 'success'
       });
     }
   }, [gameWon]);
+
+  const terminalProps: TerminalProps = {
+    entries: terminalHistory,
+    levelName,
+    moveCount,
+    tutorialMessage,
+    debugMode,
+    progress,
+    dominantState,
+    colorPalette,
+    onReset: () => {},
+    onRequestHint: () => {},
+    onShowHelp: () => {},
+    onOpenSettings: () => {},
+    hintTile: null
+  };
 
   return (
     <div 
@@ -142,25 +137,8 @@ const ScreenDisplay = forwardRef<ScreenDisplayHandle, ScreenDisplayProps>((props
         `,
         border: `1px solid ${colorPalette.darkest}CC`,
       }}
-      onTouchStart={() => setShowTimestamps(true)}
-      onTouchEnd={() => setShowTimestamps(false)}
-      onMouseDown={() => setShowTimestamps(true)}
-      onMouseUp={() => setShowTimestamps(false)}
-      onMouseLeave={() => setShowTimestamps(false)}
     >
-      <Terminal
-        ref={terminalRef}
-        levelName={levelName}
-        moveCount={moveCount}
-        colorPalette={colorPalette}
-        tutorialMessage={tutorialMessage}
-        debugMode={debugMode}
-        progress={progress}
-        dominantState={dominantState}
-        currentLevelMoves={currentLevelMoves}
-        terminalHistory={terminalHistory}
-        showTimestamps={showTimestamps}
-      />
+      <Terminal {...terminalProps} />
     </div>
   );
 });

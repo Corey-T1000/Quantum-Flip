@@ -3,16 +3,23 @@ import { generateAllLevels } from './levelGeneration';
 
 // Key for storing levels in localStorage
 const LEVELS_STORAGE_KEY = 'quantum_flip_levels';
+const LEVELS_VERSION_KEY = 'quantum_flip_levels_version';
+const CURRENT_VERSION = '1.1.0'; // Increment this when making changes to level generation
 
 // Get or generate levels
 const getLevelsFromStorage = (): { board: BoardState; solution: [number, number][] }[] => {
+  const storedVersion = localStorage.getItem(LEVELS_VERSION_KEY);
   const storedLevels = localStorage.getItem(LEVELS_STORAGE_KEY);
-  if (storedLevels) {
-    return JSON.parse(storedLevels);
+  
+  // If version doesn't match or levels don't exist, generate new ones
+  if (!storedLevels || storedVersion !== CURRENT_VERSION) {
+    const newLevels = generateAllLevels();
+    localStorage.setItem(LEVELS_STORAGE_KEY, JSON.stringify(newLevels));
+    localStorage.setItem(LEVELS_VERSION_KEY, CURRENT_VERSION);
+    return newLevels;
   }
-  const newLevels = generateAllLevels();
-  localStorage.setItem(LEVELS_STORAGE_KEY, JSON.stringify(newLevels));
-  return newLevels;
+  
+  return JSON.parse(storedLevels);
 };
 
 // Generate levels only once and store them
@@ -49,5 +56,6 @@ export const getLevelSolution = (levelIndex: number): [number, number][] => {
  */
 export const resetAllLevels = (): void => {
   localStorage.removeItem(LEVELS_STORAGE_KEY);
+  localStorage.removeItem(LEVELS_VERSION_KEY);
   window.location.reload();
 };

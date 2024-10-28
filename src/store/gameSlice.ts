@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { getLevel } from '../utils/game/levelData';
 
 interface GameState {
   currentLevel: number;
@@ -8,9 +9,11 @@ interface GameState {
   hintTile: [number, number] | null;
 }
 
+// Initialize with actual level data
+const initialLevel = getLevel(0);
 const initialState: GameState = {
   currentLevel: 0,
-  grid: Array(3).fill(null).map(() => Array(3).fill(false)),
+  grid: initialLevel,
   moveCount: 0,
   gameWon: false,
   hintTile: null
@@ -37,7 +40,8 @@ export const gameSlice = createSlice({
       state.hintTile = action.payload;
     },
     resetLevel: (state) => {
-      state.grid = Array(state.grid.length).fill(null).map(() => Array(state.grid[0].length).fill(false));
+      const levelData = getLevel(state.currentLevel);
+      state.grid = levelData;
       state.moveCount = 0;
       state.gameWon = false;
       state.hintTile = null;
