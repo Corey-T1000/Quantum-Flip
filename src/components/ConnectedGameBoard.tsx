@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppSelector } from '../store/hooks';
 import GameBoard from './GameBoard';
+import { analyzeBoard } from '../utils/game/boardAnalysis';
 
 interface ConnectedGameBoardProps {
   onTileClick: (row: number, col: number) => void;
@@ -15,7 +16,8 @@ const ConnectedGameBoard: React.FC<ConnectedGameBoardProps> = ({
 }) => {
   const {
     grid,
-    hintTile
+    hintTile,
+    hintLevel
   } = useAppSelector(state => state.game);
   const {
     colorPaletteIndex,
@@ -35,11 +37,17 @@ const ConnectedGameBoard: React.FC<ConnectedGameBoardProps> = ({
     text: highContrastMode ? colorPalettes[colorPaletteIndex].lightHC : colorPalettes[colorPaletteIndex].text,
   };
 
+  // Get board analysis for hints
+  const analysis = analyzeBoard(grid);
+
   return (
     <GameBoard
       grid={grid}
       onTileClick={onTileClick}
       hintTile={hintTile}
+      hintLevel={hintLevel}
+      affectedAreas={analysis.affectedAreas}
+      possibleMoveCount={analysis.moveCount}
       colorPalette={currentColorPalette}
       debugMode={debugMode}
       solution={solution}

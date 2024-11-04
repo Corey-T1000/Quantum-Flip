@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
+import { persistStore, persistReducer, PURGE } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { gameReducer } from './gameSlice';
 import { settingsReducer } from './settingsSlice';
@@ -23,12 +23,21 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE']
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'persist/PURGE']
       }
     })
 });
 
 export const persistor = persistStore(store);
+
+// Function to clear persisted state
+export const clearPersistedState = () => {
+  store.dispatch({
+    type: PURGE,
+    key: 'root',
+    result: () => null
+  });
+};
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

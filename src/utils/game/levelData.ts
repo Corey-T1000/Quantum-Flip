@@ -23,7 +23,7 @@ const getLevelsFromStorage = (): { board: BoardState; solution: [number, number]
 };
 
 // Generate levels only once and store them
-export const pregeneratedLevels = getLevelsFromStorage();
+export let pregeneratedLevels = getLevelsFromStorage();
 
 /**
  * Gets a specific level's board state.
@@ -57,5 +57,5 @@ export const getLevelSolution = (levelIndex: number): [number, number][] => {
 export const resetAllLevels = (): void => {
   localStorage.removeItem(LEVELS_STORAGE_KEY);
   localStorage.removeItem(LEVELS_VERSION_KEY);
-  window.location.reload();
+  pregeneratedLevels = generateAllLevels();
 };

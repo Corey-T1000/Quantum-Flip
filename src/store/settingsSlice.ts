@@ -25,7 +25,8 @@ export const settingsSlice = createSlice({
       state.highContrastMode = !state.highContrastMode;
     },
     setVolume: (state, action: PayloadAction<number>) => {
-      state.volume = action.payload;
+      // Clamp volume between 0 and 1
+      state.volume = Math.max(0, Math.min(1, action.payload));
     },
     toggleDebugMode: (state) => {
       state.debugMode = !state.debugMode;
