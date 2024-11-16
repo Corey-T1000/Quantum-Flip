@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="32" fill="none">
-  <rect width="180" height="32" rx="4" fill="#1A1A1A"/>
+  <defs>
+    <linearGradient id="buttonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2D2D2D"/>
+      <stop offset="100%" style="stop-color:#1A1A1A"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="32" rx="4" fill="url(#buttonGradient)"/>
   <g fill="#fff">
     <!-- Bolt logo -->
     <path fill-rule="evenodd" d="M26.64 22.866c-1.035 0-2.051-.368-2.635-1.158l-.206.932L20 24.61l.41-1.97L23.177 10.39h3.388l-.979 4.318c.79-.846 1.525-1.158 2.466-1.158 2.032 0 3.388 1.305 3.388 3.693 0 2.462-1.563 5.623-4.8 5.623m1.3-4.926c0 1.14-.828 2.003-1.901 2.003-.602 0-1.148-.22-1.506-.606l.527-2.26c.395-.386.847-.607 1.374-.607.81 0 1.506.588 1.506 1.47" clip-rule="evenodd"/>
