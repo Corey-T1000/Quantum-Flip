@@ -1,105 +1,68 @@
-# Quantum-Flip
+# Quantum Matrix
 
-Quantum-Flip is a strategic puzzle game that challenges players to manipulate quantum states in a grid-based environment. Engage with the Quantum Matrix and test your skills in achieving equilibrium across multiple levels of increasing complexity.
+A React-based puzzle game where players manipulate quantum states to solve increasingly complex challenges.
 
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/Corey-T1000/Quantum-Flip)
+## 🚀 Features
 
-## Features
+- Progressive difficulty levels with increasing board sizes and complexity
+- Interactive game board with quantum state manipulation
+- AI-powered narrative system
+- Progress tracking and save system
+- Adaptive hint system
+- Multiple input modes including T9 keyboard
+- Custom color themes
 
-- Grid-based gameplay with quantum-inspired mechanics
-- Progressive difficulty levels, including tutorial stages
-- Neumorphic design with customizable color palettes
-- Accessibility options, including high contrast mode
-- Responsive design for various devices
-- Immersive sound effects
+## 🛠️ Technology Stack
 
-## Getting Started
+- React 18 with TypeScript
+- Vite for build tooling
+- Tailwind CSS for styling
+- Modern React patterns and hooks
 
-### Prerequisites
+## 🏗️ Project Structure
 
-- Node.js (version 14 or higher recommended)
-- npm or yarn
+```
+quantum-matrix/
+├── src/
+│   ├── components/     # React components
+│   ├── utils/          # Game logic and helpers
+│   ├── types/          # TypeScript definitions
+│   └── assets/         # Static assets
+├── tests/              # Test suites
+└── docs/              # Documentation
+```
 
-### Installation
+## 🚦 Getting Started
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/Corey-T1000/Quantum-Flip.git
-   ```
-
-2. Navigate to the project directory:
-   ```
-   cd Quantum-Flip
-   ```
-
-3. Install dependencies:
-   ```
+1. Clone the repository
+2. Install dependencies:
+   ```bash
    npm install
    ```
-   or
+3. Start development server:
+   ```bash
+   npm run dev
    ```
-   yarn install
+4. Build for production:
+   ```bash
+   npm run build
    ```
 
-### Running the Development Server
+## 🧪 Testing
 
-Start the development server:
-
-```
-npm run dev
-```
-or
-```
-yarn dev
+Run tests with:
+```bash
+npm test
 ```
 
-Open your browser and visit `http://localhost:5173` to play the game.
+## 📝 Contributing
 
-## How to Play
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-1. Click on a tile to engage it and its adjacent tiles.
-2. Your goal is to achieve a uniform state across all tiles.
-3. Progress through increasingly complex levels.
-4. Use the "Consult Oracle" feature for hints when stuck.
-5. Adjust game settings, including color schemes and audio, in the settings menu.
+## 📜 License
 
-## Project Structure
-
-- `src/`: Source code for the game
-  - `components/`: React components for game elements
-  - `utils/`: Utility functions and game logic
-  - `types.ts`: TypeScript type definitions
-- `public/`: Static assets, including sounds
-- `vite.config.ts`: Vite configuration
-- `tailwind.config.js`: Tailwind CSS configuration
-
-## Technologies Used
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Lucide React (for icons)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-- Inspired by quantum mechanics concepts
-- Sound effects provided by [source]
-
-## Future Enhancements
-
-- Additional game modes (e.g., time attack, puzzle solver)
-- Multiplayer functionality
-- Advanced quantum mechanics concepts
-- Leaderboards and achievements
-- Mobile app versions
-
-Enjoy playing Quantum-Flip and mastering the Quantum Matrix!
+MIT License - see LICENSE file for details

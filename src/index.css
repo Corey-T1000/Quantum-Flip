@@ -2,37 +2,205 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+:root {
+  --amber-primary: #FFB000;
+  --amber-dim: #CC8800;
+  --amber-bright: #FFCC00;
+  --amber-glow: rgba(255, 176, 0, 0.4);
+  --crt-background: #1A1410;
+}
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'Share Tech Mono', monospace;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
 }
 
 @layer components {
-  .neumorphic-shadow {
-    box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.1);
+  .terminal-button {
+    background: transparent;
+    border: 1px solid var(--amber-primary);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
   }
 
-  .neumorphic-inset {
-    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.1);
+  .terminal-button:hover:not(:disabled) {
+    background: rgba(255, 176, 0, 0.1);
+    box-shadow: 0 0 10px var(--amber-glow);
   }
 
-  .neumorphic-button {
-    @apply neumorphic-shadow text-gray-700 font-semibold py-2 px-4 rounded-lg transition-all duration-300 ease-in-out;
-    background-color: inherit;
+  .terminal-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
-  .neumorphic-button:hover {
-    @apply neumorphic-inset;
+  .vintage-terminal {
+    background: linear-gradient(180deg, var(--crt-background) 0%, #231815 100%);
+    border: 1px solid #3B3027;
+    box-shadow: 
+      0 0 2px var(--amber-primary),
+      inset 0 0 15px var(--amber-glow);
+    font-family: 'VT323', monospace;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vintage-terminal::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 176, 0, 0.03),
+      rgba(255, 176, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+  }
+
+  .vintage-terminal::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at center,
+      transparent 0%,
+      var(--crt-background) 100%
+    );
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .terminal-text {
+    color: var(--amber-primary);
+    text-shadow: 0 0 5px var(--amber-glow);
+  }
+
+  .terminal-text-alert {
+    color: var(--amber-bright);
+    text-shadow: 0 0 5px var(--amber-glow);
+  }
+
+  .terminal-text-warning {
+    color: var(--amber-bright);
+    text-shadow: 0 0 5px var(--amber-glow);
+  }
+
+  .terminal-header {
+    border-bottom: 1px solid #3B3027;
+    background: linear-gradient(90deg, #231815 0%, #2A1E1A 100%);
+  }
+
+  .terminal-scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(255, 176, 0, 0.05) 50%,
+      transparent 100%
+    );
+    animation: scanline 6s linear infinite;
+    pointer-events: none;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--amber-dim);
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--amber-primary);
+  }
+
+  @keyframes scanline {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(0.98);
+    }
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .hint-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .terminal-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background-color: var(--amber-primary);
+    animation: blink 1s step-end infinite;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .terminal-flicker {
+    animation: flicker 8s linear infinite;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 0.97; }
+    92% { opacity: 0.95; }
+    95% { opacity: 0.90; }
+    97% { opacity: 0.95; }
   }
 }

@@ -1,109 +1,124 @@
-import React, { useMemo } from 'react';
-import { BoardState } from '../types';
+import React from 'react';
+import { SolutionStep } from '../utils/solutionFinder';
+import { T9_KEYS } from '../utils/t9Keyboard';
 
 interface GameBoardProps {
-  grid: BoardState;
+  grid: boolean[][];
   onTileClick: (row: number, col: number) => void;
+  solutionPath: SolutionStep[] | null;
+  highContrast: boolean;
   colorPalette: { light: string; dark: string; lightHC: string; darkHC: string };
-  hintTile: [number, number] | null;
-  debugMode: boolean;
-  solution?: [number, number][];
-  onHintUsed: () => void;
+  isT9Mode?: boolean;
+  currentText?: string;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
   grid,
   onTileClick,
+  solutionPath,
   colorPalette,
-  hintTile,
-  debugMode,
-  solution,
-  onHintUsed,
+  isT9Mode,
+  currentText,
 }) => {
-  const gridStyle = useMemo(() => ({
-    gridTemplateColumns: `repeat(${grid.length}, minmax(0, 1fr))`,
-  }), [grid.length]);
+  const getSolutionStep = (row: number, col: number): number | null => {
+    if (!solutionPath) return null;
+    const step = solutionPath.find(s => s.row === row && s.col === col);
+    return step ? step.step : null;
+  };
 
-  const handleTileClick = (row: number, col: number) => {
-    onTileClick(row, col);
-    if (hintTile && hintTile[0] === row && hintTile[1] === col) {
-      onHintUsed();
+  const getT9Key = (row: number, col: number): string => {
+    const index = row * 3 + col;
+    if (index < T9_KEYS.length) {
+      return T9_KEYS[index].letters;
     }
+    if (row === 3) {
+      if (col === 0) return 'del';
+      if (col === 1) return 'space';
+      if (col === 2) return 'send';
+    }
+    return '';
+  };
+
+  const getT9Number = (row: number, col: number): string => {
+    const index = row * 3 + col;
+    if (index < T9_KEYS.length) {
+      return T9_KEYS[index].number;
+    }
+    if (row === 3) {
+      if (col === 0) return '*';
+      if (col === 1) return '0';
+      if (col === 2) return '#';
+    }
+    return '';
   };
 
   return (
-    <div className="relative">
-      <div className="grid gap-4" style={gridStyle}>
-        {grid.map((row, rowIndex) =>
-          row.map((tile, colIndex) => {
-            const isHintTile = hintTile && hintTile[0] === rowIndex && hintTile[1] === colIndex;
-            const isSolutionTile = debugMode && solution?.some(([r, c]) => r === rowIndex && c === colIndex);
-            const tileStyle: React.CSSProperties = {
-              backgroundColor: tile ? colorPalette.light : colorPalette.dark,
-              boxShadow: tile
-                ? '3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.1)'
-                : 'inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.1)',
-              position: 'relative',
-              cursor: 'pointer',
-            };
-
-            if (isHintTile) {
-              tileStyle.backgroundColor = '#FFD700';
-              tileStyle.boxShadow = `0 0 20px #FFD700`;
-              tileStyle.animation = 'pulse-hint 1.5s infinite';
-            }
-
+    <div className="vintage-terminal w-full h-full p-[3%] rounded-lg">
+      {isT9Mode && (
+        <div className="mb-4 p-2 border-2 border-[var(--amber-primary)] bg-[var(--crt-background)] min-h-[40px]">
+          <span className="terminal-text">{currentText}<span className="terminal-cursor"></span></span>
+        </div>
+      )}
+      <div 
+        className="grid h-full w-full"
+        style={{ 
+          gap: '3%',
+          gridTemplateColumns: `repeat(${grid[0].length}, 1fr)`,
+          gridTemplateRows: `repeat(${isT9Mode ? 4 : grid.length}, 1fr)`,
+        }}
+      >
+        {Array(isT9Mode ? 4 : grid.length).fill(null).map((_, rowIndex) =>
+          Array(grid[0].length).fill(null).map((_, colIndex) => {
+            const stepNumber = getSolutionStep(rowIndex, colIndex);
+            const t9Key = isT9Mode ? getT9Key(rowIndex, colIndex) : null;
+            const t9Number = isT9Mode ? getT9Number(rowIndex, colIndex) : null;
+            const isActive = !isT9Mode && grid[rowIndex]?.[colIndex];
+            
             return (
               <button
                 key={`${rowIndex}-${colIndex}`}
-                className={`w-full aspect-square rounded-lg transition-all duration-300 ease-in-out relative ${
-                  isSolutionTile ? 'ring-4 ring-green-400' : ''
-                }`}
-                onClick={() => handleTileClick(rowIndex, colIndex)}
-                style={tileStyle}
+                className="relative w-full h-full transition-all duration-300 ease-in-out"
+                onClick={() => onTileClick(rowIndex, colIndex)}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: `2px solid ${isActive ? 'var(--amber-primary)' : 'var(--amber-dim)'}`,
+                  boxShadow: isActive
+                    ? '0 0 10px var(--amber-glow), inset 0 0 5px var(--amber-glow)'
+                    : 'none',
+                }}
               >
-                {debugMode && (
-                  <span className="absolute top-1 left-1 text-xs font-bold text-white bg-black bg-opacity-50 px-1 rounded">
-                    {`${rowIndex},${colIndex}`}
-                  </span>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: isActive ? 'var(--amber-primary)' : 'transparent',
+                    opacity: isActive ? 0.2 : 0,
+                  }}
+                />
+                {stepNumber !== null && !isT9Mode && (
+                  <div className="absolute inset-0 flex items-center justify-center font-bold text-2xl hint-number terminal-text">
+                    {stepNumber}
+                  </div>
                 )}
-                {debugMode && isSolutionTile && (
-                  <span className="absolute bottom-1 right-1 text-xs font-bold text-white bg-green-500 bg-opacity-50 px-1 rounded">
-                    {solution!.findIndex(([r, c]) => r === rowIndex && c === colIndex) + 1}
-                  </span>
+                {isT9Mode && (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <span className="terminal-text text-xl">{t9Number}</span>
+                    <span className="terminal-text text-xs opacity-70">{t9Key}</span>
+                  </div>
                 )}
+                <div 
+                  className="absolute inset-0"
+                  style={{
+                    background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 176, 0, 0.03) 3px, transparent 3px)',
+                    pointerEvents: 'none',
+                  }}
+                />
               </button>
             );
           })
         )}
       </div>
-      {debugMode && (
-        <div className="absolute top-0 left-0 bg-black bg-opacity-75 text-white p-2 rounded">
-          <h3 className="font-bold">Debug Mode</h3>
-          <p>Grid Size: {grid.length}x{grid.length}</p>
-          <p>Solution Length: {solution?.length || 'N/A'}</p>
-        </div>
-      )}
-      <style>
-        {`
-          @keyframes pulse-hint {
-            0% {
-              transform: scale(1);
-              box-shadow: 0 0 20px #FFD700;
-            }
-            50% {
-              transform: scale(1.05);
-              box-shadow: 0 0 30px #FFD700;
-            }
-            100% {
-              transform: scale(1);
-              box-shadow: 0 0 20px #FFD700;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
 
-export default React.memo(GameBoard);
+export default GameBoard;
