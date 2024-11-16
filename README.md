@@ -1,5 +1,8 @@
 # Quantum Matrix
 
+[![Open in Bolt](https://bolt.new/button)](https://bolt.new/Corey-T1000/Quantum-Flip)
+[![View on Vercel](https://img.shields.io/badge/View%20on-Vercel-%23000000?style=flat&logo=vercel)](https://quantum-flip.vercel.app)
+
 A React-based puzzle game where players manipulate quantum states to solve increasingly complex challenges.
 
 ## 🚀 Features
